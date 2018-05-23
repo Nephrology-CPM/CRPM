@@ -1,0 +1,8 @@
+name : CRPM
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - pytest
+  - pylint
+  
