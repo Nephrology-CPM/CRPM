@@ -25,7 +25,8 @@ conda env update
 ```
 source activate CRPM
 ```
-+ Export environment to `requirements.txt` (for explicit builds)
++ Export environment to `requirements.txt` (for explicit builds).
+May have to edit file fo compatibility issues (pip)
 ```
 conda list -e > requirements.txt
 ```

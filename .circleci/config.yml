@@ -23,7 +23,8 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
+          #- v1-dependencies-{{ checksum "requirements.txt" }}
+          - v1-dependencies-{{ checksum "environment.yml" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
@@ -32,12 +33,16 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
+            #pip install -r requirements.txt
+            pip install conda
+            conda env create -f environment.yml
+            source activate CRPM
 
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          key: v1-dependencies-{{ checksum "environment.yml" }}
+               #v1-dependencies-{{ checksum "requirements.txt" }}
 
       # run tests!
       # this example uses Django's built-in test-runner
@@ -48,6 +53,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
+            source activate CRPM
             ./integration.sh
 
       - store_artifacts:
