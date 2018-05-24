@@ -4,6 +4,10 @@ setup(
     name='crpm',
     version='0.1',
     packages=find_packages(exclude=['tests*']),
+    include_package_data=True,
+    package_data={
+        '': ['*.csv'],
+    },
     license='MIT',
     description='Data tools for the Center for Renal Precision Medicine at the University of Texas Health San Antonio.',
     long_description=open('README.md').read(),
@@ -19,5 +23,5 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
         "Topic :: Scientific/Engineering :: Bio-Informatics"
-    ]
+    ],
 )
