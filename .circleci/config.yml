@@ -3,6 +3,54 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
+
+variables:
+  # Download and cache dependencies
+  restore_cache: &restore_cache
+    restore_cache:
+      keys:
+        - v1-dependencies-{{
+          checksum ".circleci/common.sh" }}-{{
+          checksum ".circleci/setup.sh" }}-{{
+          checksum ".circleci/config.yml" }}-{{
+          checksum "environment.yml" }}-{{
+          arch }}
+        # fallback to using the latest cache if no exact match is found
+        #- v1-dependencies-
+  save_cache: &save_cache
+    save_cache:
+      paths:
+        - miniconda
+      key: v1-dependencies-{{
+        checksum ".circleci/common.sh" }}-{{
+        checksum ".circleci/setup.sh" }}-{{
+        checksum ".circleci/config.yml" }}-{{
+        checksum "environment.yml" }}-{{
+        arch }}
+        #v1-dependencies-{{ checksum "requirements.txt" }}
+  common: &common
+    run:
+      name: Download common definitions
+      command : curl -s https://raw.githubusercontent.com/dmontemayor/crpm-common/master/common.sh > .circleci/common.sh
+  setup: &setup
+    run:
+      name: Setup dependencies
+      command: .circleci/setup.sh
+  run: &run
+    run:
+      name: Run tests
+      command: integration.sh
+  #macos: &macos
+  #  macos:
+  #    xcode: "8.3.3"
+  #linux: &linux
+  #  machine: true
+  install_crpm: &install_crpm
+    run:
+      name: Install crpm
+      command: python setup.py install
+
+
 jobs:
   build:
     docker:
@@ -19,43 +67,11 @@ jobs:
 
     steps:
       - checkout
-
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-          #- v1-dependencies-{{ checksum "requirements.txt" }}
-          - v1-dependencies-{{ checksum "environment.yml" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
-
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            #pip install -r requirements.txt
-            pip install conda
-            conda env create -f environment.yml
-            source activate CRPM
-
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "environment.yml" }}
-               #v1-dependencies-{{ checksum "requirements.txt" }}
-
-      # run tests!
-      # this example uses Django's built-in test-runner
-      # other common Python testing frameworks include pytest and nose
-      # https://pytest.org
-      # https://nose.readthedocs.io
-      - run:
-          name: run tests
-          command: |
-            . venv/bin/activate
-            source activate CRPM
-            ./integration.sh
-
+      - *common
+      - *restore_cache
+      - *setup
+      - *save_cache
+      - *install_crpm
       - store_artifacts:
           path: test-reports
           destination: test-reports
