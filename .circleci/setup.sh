@@ -32,7 +32,7 @@ if [[ ! -d $WORKSPACE/miniconda ]]; then
     #conda config --system --add channels bioconda
 
     # step 3: install bioconda-utils and test requirements
-    conda install -y --file requirements.txt --file test-requirements.txt
+    conda install -y --file .circleci/requirements.txt --file requirements.txt
 
     # step 4: cleanup
     conda clean -y --all
