@@ -10,15 +10,14 @@ setup(
     #install_requires=[''],
     url='https://github.com/dmontemayor/CRPM',
     author='Daniel Montemayor',
-    author_email='montemayord2@uthscsa.edu'
+    author_email='montemayord2@uthscsa.edu',
     classifiers=[
-    "Development Status :: 1 - Planning",
-    "Environment :: Console",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering :: Bio-Informatics"
-    ],
-
+        "Development Status :: 1 - Planning",
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3",
+        "Topic :: Scientific/Engineering :: Bio-Informatics"
+    ]
 )
