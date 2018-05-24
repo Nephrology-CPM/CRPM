@@ -2,6 +2,6 @@
 """
 
 def test_noop():
-    """This test does nothing
+    """This test does nothing.
     """
     pass
