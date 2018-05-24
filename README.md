@@ -13,24 +13,28 @@ which will open an installer screen that will walk you through installation.
 ```
 conda update -n base conda
 ```
-+ Set up `CRPM` virtual environment using provided `environment.yml` file
++ Create a virtual environment named 'CRPM'
 ```
-conda env create
+conda create --file requirements.txt -c conda-forge -n CRPM
 ```
-+ Update virtual environement (when necessary)
-```
-conda env update
-```
+When prompted new packages will be installed, procceed by pressing `y`.
 + Activate `CRPM` virtual environment
 ```
-source activate CRPM
+conda activate CRPM
 ```
-+ Export environment to `requirements.txt` (for explicit builds).
-May have to edit file fo compatibility issues (pip)
++ Update virtual environment (when necessary)
 ```
-conda list -e > requirements.txt
+conda env update -n CRPM -f requirements.txt
 ```
 + Integration testing - Check for code style and run tests
 ```
 ./integration.sh
+```
++ To deactivate environment, use
+```
+conda deactivate
+```
++ To remove an environment, use
+```
+conda env remove -n CRPM
 ```
