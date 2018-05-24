@@ -3,8 +3,8 @@ Data tools for the Center for Renal Precision Medicine at the University of Texa
 
 
 ## Getting Started
-+ Follow directions to install miniconda for [Windows](https://conda.io/docs/user-guide/install/windows.html), [MacOS](https://conda.io/docs/user-guide/install/macos.html), or [Linux](https://conda.io/docs/user-guide/install/linux.html).
-For example for MacOS open a terminal window and run:
++ Follow directions to download miniconda installer for [Windows](https://conda.io/docs/user-guide/install/windows.html), [MacOS](https://conda.io/docs/user-guide/install/macos.html), or [Linux](https://conda.io/docs/user-guide/install/linux.html).
+Run the installer script, e.g. for MacOS open a terminal and run:
 ```
 bash Miniconda3-latest-MacOSX-x86_64.sh
 ```
@@ -38,3 +38,14 @@ conda deactivate
 ```
 conda env remove -n CRPM
 ```
+
+## Goals
++ implement a deep neural network framework
+  + forward and back propagation
+  + body plan
+  + activation functions
++ implement a self organizing map framework
++ implement a Monte-Carlo hyper-parameterization routine for deep neural networks
++ implement data transformation - unitvariance
++ implement data cleaning - remove empty rows/cols
++ implement data
