@@ -14,6 +14,7 @@ variables:
           checksum ".circleci/setup.sh" }}-{{
           checksum ".circleci/config.yml" }}-{{
           checksum "requirements.txt" }}-{{
+          checksum "test-requirements.txt" }}-{{
           arch }}
         # fallback to using the latest cache if no exact match is found
         #- v1-dependencies-
@@ -26,6 +27,7 @@ variables:
         checksum ".circleci/setup.sh" }}-{{
         checksum ".circleci/config.yml" }}-{{
         checksum "requirements.txt" }}-{{
+        checksum "test-requirements.txt" }}-{{
         arch }}
         #v1-dependencies-{{ checksum "requirements.txt" }}
   common: &common
@@ -39,7 +41,7 @@ variables:
   integration_test: &integration_test
     run:
       name: Run integration tests
-      command: .circleci/integration.sh
+      command: ./integration.sh
   #macos: &macos
   #  macos:
   #    xcode: "8.3.3"
