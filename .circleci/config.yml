@@ -36,9 +36,9 @@ variables:
     run:
       name: Setup dependencies
       command: .circleci/setup.sh
-  run: &run
+  integration_test: &integration_test
     run:
-      name: Run tests
+      name: Run integration tests
       command: integration.sh
   #macos: &macos
   #  macos:
@@ -72,6 +72,7 @@ jobs:
       - *setup
       - *save_cache
       - *install_crpm
+      - *integration_test
       - store_artifacts:
           path: test-reports
           destination: test-reports
