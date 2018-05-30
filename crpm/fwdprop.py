@@ -1,6 +1,8 @@
 """ Compute state of ffn with from input dataset
 """
 
+from crpm.activationfunctions import activation
+
 def fwdprop(data, model):
     """ Compute network activity stemming from input dataset
 
@@ -24,9 +26,30 @@ def fwdprop(data, model):
             {"activity":(NL, M), "stimulus":(NL, M)}].
     """
 
-    prediction = []
-    #L E  F T   O F F   H E R E
-    prediction = data[0,]
+    #init state variables for input layer with input data
     state = []
+    state.append(
+        {
+            "layer":0,
+            "activity":data
+        }
+    )
+
+    #calculate state variables for hidden layers
+    prevlayeractivity = state[0]["activity"]
+    for layer in model[1:]:
+        stimulus = layer["weight"].dot(prevlayeractivity) + layer["bias"]
+        activity = activation(layer["activation"], stimulus)
+        prevlayeractivity = activity
+        state.append(
+            {
+                "layer":layer["layer"],
+                "activity":activity,
+                "stimulus":stimulus
+            }
+        )
+
+    #define prediction as top layer activity
+    prediction = state[-1]["activity"]
 
     return prediction, state

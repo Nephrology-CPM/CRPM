@@ -14,7 +14,7 @@ def test_example_bodyplan():
     #confirm parameters for each layer
     assert bodyplan[0]["layer"] == 0
     assert bodyplan[0]["n"] == 2
-    assert bodyplan[0]["activation"] == "identity"
+    assert bodyplan[0]["activation"] == "linear"
 
     assert bodyplan[1]["layer"] == 1
     assert bodyplan[1]["n"] == 3
@@ -61,7 +61,7 @@ def test_init_ffn():
     assert model[4]["bias"].shape[0] == 1
     assert model[4]["bias"].shape[1] == 1
 
-    assert model[0]["activation"] == 'identity'
+    assert model[0]["activation"] == 'linear'
     assert model[1]["activation"] == 'relu'
     assert model[2]["activation"] == 'relu'
     assert model[3]["activation"] == 'relu'
