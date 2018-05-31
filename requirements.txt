@@ -1,3 +1,4 @@
 pylint
 pytest
-pandas
+numpy
+#pandas
