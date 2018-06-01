@@ -25,8 +25,8 @@ def backprop(model, state, dloss):
 
     Returns:
         forces: A list of layer parameter forces.
-        Each layer is a dict with keys and shapes "dweight":(n,nprev), and
-        "dbias" (n, 1).
+        Each layer is a dict with keys and shapes "fweight":(n,nprev), and
+        "fbias" (n, 1).
     """
 
     #init forces
@@ -53,8 +53,8 @@ def backprop(model, state, dloss):
         forces.insert(0,
                       {
                           "layer":layer["layer"],
-                          "dweight":-dweight,
-                          "dbias":-dbias
+                          "fweight":-dweight,
+                          "fbias":-dbias
                       }
                      )
 

@@ -52,7 +52,7 @@ def dlogistic(stimulus):
     """definition of deriv of logistic function with respect to stimulus
     """
     logi = logistic(stimulus)
-    return np.multiply(logi,1-logi)
+    return np.multiply(logi, 1-logi)
 
 #step
 #softmax

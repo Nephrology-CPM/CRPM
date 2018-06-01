@@ -9,7 +9,7 @@ def gradientdecent(model, data, targets, lossname):
             data:
             targets:
             lossname:
-        Returns: final cost and will modify model
+        Returns: final predictions and cost. Training will modify model.
     """
 
     import numpy as np
@@ -38,9 +38,10 @@ def gradientdecent(model, data, targets, lossname):
             forces = backprop(model, state, dloss)
 
             #normalize forces through learning rate alpha
-            #mean abs(toplayer forces) < 0.00001 mean toplayer weights
-            alpha = 0.00001 *  np.linalg.norm(model[-1]["weight"])
-            alpha /= np.linalg.norm(forces[-1]["dweight"])
+            #mean abs(toplayer forces) < 0.0001 mean toplayer weights
+            #alpha = 0.00001 *  np.linalg.norm(model[-1]["weight"])
+            alpha = 0.0001 *  np.linalg.norm(model[-1]["weight"])
+            alpha /= np.linalg.norm(forces[-1]["fweight"])
 
             #record cost
             costbuffer.append(cost)
@@ -48,18 +49,22 @@ def gradientdecent(model, data, targets, lossname):
             #update model
             for layer in forces:
                 index = layer["layer"]
-                model[index]["weight"] = model[index]["weight"] + alpha * layer["dweight"]
-                model[index]["bias"] = model[index]["bias"] + alpha * layer["dbias"]
+                model[index]["weight"] = model[index]["weight"] + alpha * layer["fweight"]
+                model[index]["bias"] = model[index]["bias"] + alpha * layer["fbias"]
 
         #calculate cost slope to check for convergence
         slope = niter*np.sum(np.multiply(tgrid, costbuffer))-tsum*np.sum(costbuffer)
         slope = slope/tvar
 
-        print(slope, cost)
+        #print(costbuffer[-1])
 
         #exit condition
-        if abs(slope) <= 1E-10:
+        if abs(slope) <= 1E-8:
             break
 
+    #calculate final predictions and cost
+    pred, state = fwdprop(data, model)
+    cost, dloss = loss(lossname, pred, targets)
+
     #return last cost
-    return costbuffer[-1]
+    return pred, cost

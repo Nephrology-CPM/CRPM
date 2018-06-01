@@ -7,7 +7,7 @@ def loss(name, pred, target):
     """
     return {
         "mse":mse(pred, target),
-        "crossentropy":crossentropy(pred, target),
+        #"bce":bce(pred, target),
     }.get(name, mse(pred, target))
 
 #----------------------------------------------------
@@ -21,13 +21,14 @@ def mse(pred, target):
 
 #----------------------------------------------------
 
-def crossentropy(pred, target):
-    """Cross entropy error function
+def bce(pred, target):
+    """Binary cross entropy error function
     """
-    pred1 = np.subtract(1,pred)
-    targ1 = np.subtract(1,target)
-    dloss = -np.divide(targ1,pred1)-np.divide(target,pred)
-    cost = -(np.multiply(target,np.log(pred))+np.multiply(targ1,np.log(pred1))).mean()
-    return cost, dloss
+    pred1 = np.subtract(1, pred)
+    targ1 = np.subtract(1, target)
+    dloss = np.add(np.divide(targ1, pred1), np.divide(target, pred))
+    cost = np.add(np.multiply(target, np.log(pred)),
+                  np.multiply(targ1, np.log(pred1))).mean()
+    return -cost, -dloss
 
 #----------------------------------------------------

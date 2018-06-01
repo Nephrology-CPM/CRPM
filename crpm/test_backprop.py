@@ -27,10 +27,10 @@ def test_backprop_number_adder():
     __, dloss = loss("mse", pred, data[-1,])
     forces = backprop(addermodel, state, dloss)
 
-    assert forces[-1]["dweight"].shape == (1, 5)
-    assert np.all(forces[-1]["dweight"] == 0)
-    assert forces[-1]["dbias"].shape == (1, 1)
-    assert np.all(forces[-1]["dbias"] == 0)
+    assert forces[-1]["fweight"].shape == (1, 5)
+    assert np.all(forces[-1]["fweight"] == 0)
+    assert forces[-1]["fbias"].shape == (1, 1)
+    assert np.all(forces[-1]["fbias"] == 0)
 
 def test_numadd_forcedir():
     """test that number adder with initial wieghts >1 will have negative forces.
@@ -58,5 +58,5 @@ def test_numadd_forcedir():
     __, dloss = loss("mse", pred, data[-1,])
     forces = backprop(addermodel, state, dloss)
 
-    assert np.all(forces[-1]["dweight"] < 0)
-    assert np.all(forces[-1]["dbias"] < 0)
+    assert np.all(forces[-1]["fweight"] < 0)
+    assert np.all(forces[-1]["fbias"] < 0)

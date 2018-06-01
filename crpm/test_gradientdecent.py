@@ -21,25 +21,22 @@ def test_solve_numberadder():
 
     #train number_adder model  with mean squared error
     __, data = load_dataset("crpm/data/number_adder.csv")
-    __ = gradientdecent(model, data[0:5,], data[-1,], "mse")
+    __, __ = gradientdecent(model, data[0:5,], data[-1,], "mse")
 
     assert np.allclose(model[1]["weight"], 1.0, rtol=.001)
 
 def test_solve_nestedcs():
     """test nested cs can be solved
     """
-    #import numpy as np
     from crpm.ffn_bodyplan import init_ffn
     from crpm.dataset import load_dataset
     from crpm.gradientdecent import gradientdecent
+    from crpm.analyzebinaryclassifier import analyzebinaryclassifier
 
     #manually create a bodyplan for nestedCs.csv data
     bodyplan = [
         {"layer":0, "n":2, "activation":"linear"},
-        {"layer":1, "n":5, "activation":"logistic"},
-        {"layer":2, "n":5, "activation":"logistic"},
-        {"layer":3, "n":5, "activation":"logistic"},
-        {"layer":4, "n":1, "activation":"logistic"}
+        {"layer":2, "n":1, "activation":"logistic"}
         ]
 
     #create model
@@ -48,7 +45,15 @@ def test_solve_nestedcs():
     #download nestedCs data
     __, data = load_dataset("crpm/data/nestedCs.csv")
 
-    #train model with cross entropy error
-    cost = gradientdecent(model, data[0:2,], data[-1,], "crossentropy")
+    #train model
+    pred, __ = gradientdecent(model, data[0:2,], data[-1,], "mse")
 
-    assert cost == 0
+    #analyze binary classifier
+    __, report = analyzebinaryclassifier(pred, data[-1,])
+
+    #print(report)
+    #import matplotlib.pyplot as plt
+    #plt.scatter(*zip(*ROC))
+    #plt.show()
+
+    assert report["Accuracy"] > .80
