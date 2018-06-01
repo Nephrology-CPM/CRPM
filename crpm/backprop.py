@@ -1,4 +1,4 @@
-"""Compute forces on model based on cost functions
+"""Compute forces on model based on loss function
 """
 
 import numpy as np
@@ -16,7 +16,7 @@ def backprop(model, state, dloss):
             current model state cached for use in the subsequent backward
             propagation step of the learning algorithm with keys and shapes
             [{"activity":(Nx, M)}
-            {"activity":(N1, M), "stimulus":(N1, M)},
+           lossctivity":(N1, M), "stimulus":(N1, M)},
             {"activity":(N2, M), "stimulus":(N2, M)},
             ...,
             {"activity":(NL, M), "stimulus":(NL, M)}].
@@ -25,8 +25,8 @@ def backprop(model, state, dloss):
 
     Returns:
         forces: A list of layer parameter forces.
-        Each layer is a dict with keys and shapes "dweight":(n,nprev), and
-        "dbias" (n, 1).
+        Each layer is a dict with keys and shapes "fweight":(n,nprev), and
+        "fbias" (n, 1).
     """
 
     #init forces
@@ -53,8 +53,8 @@ def backprop(model, state, dloss):
         forces.insert(0,
                       {
                           "layer":layer["layer"],
-                          "dweight":dweight,
-                          "dbias":dbias
+                          "fweight":-dweight,
+                          "fbias":-dbias
                       }
                      )
 

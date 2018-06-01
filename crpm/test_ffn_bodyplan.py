@@ -43,29 +43,11 @@ def test_init_ffn():
     bodyplan = read_bodyplan("crpm/data/example_ffn_bodyplan.csv")
     model = init_ffn(bodyplan)
 
-    assert model[1]["weight"].shape[0] == 3
-    assert model[1]["weight"].shape[1] == 2
-    assert model[2]["weight"].shape[0] == 5
-    assert model[2]["weight"].shape[1] == 3
-    assert model[3]["weight"].shape[0] == 7
-    assert model[3]["weight"].shape[1] == 5
-    assert model[4]["weight"].shape[0] == 1
-    assert model[4]["weight"].shape[1] == 7
-
-    assert model[1]["bias"].shape[0] == 3
-    assert model[1]["bias"].shape[1] == 1
-    assert model[2]["bias"].shape[0] == 5
-    assert model[2]["bias"].shape[1] == 1
-    assert model[3]["bias"].shape[0] == 7
-    assert model[3]["bias"].shape[1] == 1
-    assert model[4]["bias"].shape[0] == 1
-    assert model[4]["bias"].shape[1] == 1
-
-    assert model[0]["activation"] == 'linear'
-    assert model[1]["activation"] == 'relu'
-    assert model[2]["activation"] == 'relu'
-    assert model[3]["activation"] == 'relu'
-    assert model[4]["activation"] == 'logistic'
+    assert model[0]["layer"] == 0
+    assert model[1]["layer"] == 1
+    assert model[2]["layer"] == 2
+    assert model[3]["layer"] == 3
+    assert model[4]["layer"] == 4
 
     assert model[0]["n"] == 2
     assert model[1]["n"] == 3
@@ -73,8 +55,18 @@ def test_init_ffn():
     assert model[3]["n"] == 7
     assert model[4]["n"] == 1
 
-    assert model[0]["layer"] == 0
-    assert model[1]["layer"] == 1
-    assert model[2]["layer"] == 2
-    assert model[3]["layer"] == 3
-    assert model[4]["layer"] == 4
+    assert model[1]["weight"].shape == (3, 2)
+    assert model[2]["weight"].shape == (5, 3)
+    assert model[3]["weight"].shape == (7, 5)
+    assert model[4]["weight"].shape == (1, 7)
+
+    assert model[1]["bias"].shape == (3, 1)
+    assert model[2]["bias"].shape == (5, 1)
+    assert model[3]["bias"].shape == (7, 1)
+    assert model[4]["bias"].shape == (1, 1)
+
+    assert model[0]["activation"] == 'linear'
+    assert model[1]["activation"] == 'relu'
+    assert model[2]["activation"] == 'relu'
+    assert model[3]["activation"] == 'relu'
+    assert model[4]["activation"] == 'logistic'

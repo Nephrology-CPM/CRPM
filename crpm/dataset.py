@@ -1,4 +1,6 @@
 """ CRPM Dataset convention and methods
+
+    All data must be numeric.
 """
 
 def load_dataset(file):

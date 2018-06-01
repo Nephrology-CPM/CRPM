@@ -1,8 +1,8 @@
-""" Test cost functions
+""" Test loss functions
 """
 
 import numpy as np
-from crpm.costfunctions import loss
+from crpm.lossfunctions import loss
 
 def test_mse():
     """test mean square error
