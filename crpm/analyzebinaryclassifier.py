@@ -9,8 +9,6 @@ def analyzebinaryclassifier(pred, targets):
                 Predicted values range from 0 to 1.
             target: An array of shape (1,M) representing the true values of
                 the binary classes with values of 0 or 1.
-            sensitivity: a real number between 0 and 1 representing the
-            minimum sensitivity desired.
         Returns: The ROC and a dictionary of analysis results at the optimal
             threshold with key:value pairs
             "Prevalence":float,"Accuracy":float,

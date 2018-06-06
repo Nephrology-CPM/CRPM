@@ -1,0 +1,113 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+data <- read.csv("data/rawData.csv")
+data <- subset(data,!cohort==2)#exclude finndiane
+data <- subset(data,data$training_or_validation==1) #Use Training set only
+dim(data)
+```
+```{r}
+hist(data$absoute_egfr_decline ,20)
+```
+get cases and controls
+```{r}
+sum(data$absoute_egfr_decline<=-3,na.rm = TRUE)
+sum(data$absoute_egfr_decline>=-1,na.rm = TRUE)
+```
+
+list progressors
+```{r}
+sum(data$rapid_progressor==1, na.rm = TRUE) #number of rapid progressors
+sum(data$rapid_progressor==0, na.rm = TRUE) #number of non-rapid progressors
+```
+get clinical vars
+```{r}
+gen_vars <- c("rapid_progressor")
+clin_vars <- c("age", "sex", "diabetes_duration", "baseline_a1c","acr_v0", "egfr_v0", "systolic_bp_v0", "diastolic_bp_v0")
+met_vars <- c("u_x3_methyl_crotonyl_glycine_v0_gcms_badj", "u_citric_acid_v0_gcms_badj","u_glycolic_acid_v0_gcms_badj")
+predata <- data[,names(data)%in%c(clin_vars,met_vars,gen_vars)]
+```
+
+```{r}
+#fix data types
+predata$diabetes_duration <- as.numeric(levels(predata$diabetes_duration))[predata$diabetes_duration]
+predata$baseline_a1c <- as.numeric(levels(predata$baseline_a1c))[predata$baseline_a1c]
+predata$acr_v0 <- as.numeric(levels(predata$acr_v0))[predata$acr_v0]
+
+predata$systolic_bp_v0 <- as.numeric(levels(predata$systolic_bp_v0))[predata$systolic_bp_v0]
+predata$diastolic_bp_v0 <- as.null(levels(predata$diastolic_bp_v0))[predata$diastolic_bp_v0]
+
+
+str(predata)
+summary(predata)
+```
+
+Fix NAs
+```{r}
+#impute diabeties_duration NA with average
+predata$diabetes_duration <- replace(predata$diabetes_duration, is.na(predata$diabetes_duration), mean(predata$diabetes_duration, na.rm = TRUE))
+sapply(predata, function(x) sum(length(which(is.na(x)))))
+```
+```{r}
+#looks like missing egfr subjects have no egfr data at all! Let's remove them
+data[is.na(data$egfr_v0),grep("egfr",names(data))]
+```
+```{r}
+predata <- predata[!is.na(predata$egfr_v0),]
+sapply(predata, function(x) sum(length(which(is.na(x)))))
+```
+```{r}
+#looks like missing metabolite data too! Let's remove them
+data[is.na(data$u_x3_methyl_crotonyl_glycine_v0_gcms_badj),grep("methyl_crotonyl_glycine",names(data))]
+```
+```{r}
+predata <- predata[!is.na(predata$u_x3_methyl_crotonyl_glycine_v0_gcms_badj),]
+sapply(predata, function(x) sum(length(which(is.na(x)))))
+```
+
+NORMALIZATION
+```{r}
+normdata <- predata
+
+#sex to have vlaues 0 or 1
+normdata$sex <- normdata$sex -1
+
+#normalization: log2(acr)
+normdata$acr_v0 <- log2(normdata$acr_v0)
+
+#normalization: log2(metabolites) subtract mean and divide by sigma
+x <- log2(normdata$u_x3_methyl_crotonyl_glycine_v0_gcms_badj)
+normdata$u_x3_methyl_crotonyl_glycine_v0_gcms_badj <- (x-mean(x))/sd(x)
+x <- log2(normdata$u_citric_acid_v0_gcms_badj)
+normdata$u_citric_acid_v0_gcms_badj <- (x-mean(x))/sd(x)
+x <- log2(normdata$u_glycolic_acid_v0_gcms_badj)
+normdata$u_glycolic_acid_v0_gcms_badj <- (x-mean(x))/sd(x)
+```
+
+Save data
+```{r}
+#full cohort
+write.csv(normdata, file= "data/fullcohort.csv")
+
+#stratum egfr >=60 and MA+
+egfr60MA <- normdata[(predata$egfr_v0>60)&(predata$acr_v0>30),]
+write.csv(normdata, file= "data/eGFR60MA.csv")
+write.csv(normdata[,names(normdata)%in%c(gen_vars,clin_vars)])
+```
+
+Make balanced datasets based on number of rapid-progressors
+```{r}
+#get imbalance value
+a <-sum(normdata$rapid_progressor==0, na.rm = TRUE)
+b <-sum(normdata$rapid_progressor==1, na.rm = TRUE) 
+c(a,b, a-b)
+#there are more rapid-progressors than non-rapid. randomly choose from the rapid-progressors this surplus amount.
+a <- sum(egfr60MA$rapid_progressor==0, na.rm = TRUE)
+b <- sum(egfr60MA$rapid_progressor==1, na.rm = TRUE) 
+c(a,b,a-b)
+
+#divide into 5 balanced datasets
+```
+

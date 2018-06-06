@@ -26,7 +26,7 @@ conda activate CRPM
 ```
 conda env update -n CRPM -f requirements.txt
 ```
-+ Integration testing - Check for code style and run tests
++ Integration testing (for devs)- Check for code style and run tests
 ```
 ./integration.sh
 ```
@@ -39,13 +39,57 @@ conda deactivate
 conda env remove -n CRPM
 ```
 
-## Goals
-+ implement a deep neural network framework
-  + forward and back propagation
-  + body plan
-  + activation functions
+## Running JDRF analysis
+Before you begin make sure you have the `CRPM` environment activated. Refer to
+the `Gettting Started` section for instructions on how to do this.
+
+To run model with clinical variables + 3 metabolites
+```
+python -W ignore jdrf_clin_3met.py clin_3met_bodyplan.csv data/<dataset>.csv <nsamples>
+```
+where `<nsamples>` is an integer representing the number of models to train for
+calculating the confidence interval on the performance measures
+and `<dataset>` is either "fullcohort" or "eGFR60MA".
+Data is arranged with samples in columns and variables
+in rows such that data should have subject index in first column,
+followed by rapid_progressor binary labels in second column,
+followed by 10 variables (order should not matter):
+"age","sex","diabetes_duration",
+"baseline_a1c","egfr_v0","acr_v0","systolic_bp_v0",
+"u_x3_methyl_crotonyl_glycine_v0_gcms_badj",
+"u_citric_acid_v0_gcms_badj",
+"u_glycolic_acid_v0_gcms_badj".
+
+To run model with clinical variables
+```
+python -W ignore jdrf_clin.py clin_bodyplan.csv data/<dataset>.csv <nsamples>
+```
+where `<nsamples>` is an integer representing the number of models to train for
+calculating the confidence interval on the performance measures
+`<dataset>` is either "fullcohort" or "eGFR60MA".
+Data is arranged with samples in columns and variables
+in rows such that data should have subject index in first column,
+followed by rapid_progressor binary labels in second column,
+followed by 7 variables (order should not matter):
+"age","sex","diabetes_duration",
+"baseline_a1c","egfr_v0","acr_v0","systolic_bp_v0".
+
+Additionally, a batch submission script is available `batchjob.sh` that will
+run all models **_(can take up to several hours to complete depending on your machine)_**
+
+## Generating the Datasets
+The R-markdown file [jdrf.Rmd](jdrf.Rmd) provided was used to generate the
+datasets from the JDRF rawdata (not provided). In summary:
++ acr is log2 transformed.
++ metabolite data is log2 transformed then mean centered and transformed for
+ unit variance.
++ sex is binary classifier is shifted from (1,2) to values 0 and 1
+
+
+## Project Goals
++ implement a deep neural network framework **done**
+  + forward and back propagation **done**
+  + body plan **done**
+  + activation functions **done**
 + implement a self organizing map framework
 + implement a Monte-Carlo hyper-parameterization routine for deep neural networks
-+ implement data transformation - unitvariance
-+ implement data cleaning - remove empty rows/cols
-+ implement data
