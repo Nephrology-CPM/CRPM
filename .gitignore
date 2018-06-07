@@ -1,2 +1,4 @@
 .pytest_cache
 crpm/__pycache__
+.RData
+.Rhistory

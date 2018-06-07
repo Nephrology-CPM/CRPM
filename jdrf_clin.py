@@ -73,7 +73,7 @@ def jdrf_clin_3met(bodyplanfile,datafile,nsample=100):
             print(len(CVreports),flush=True)
             #-- diagnostic -- plot roc for this k set
             #if len(CVreports) < nroc:
-                #plt.scatter(*zip(*roc))
+            #    plt.scatter(*zip(*roc))
 
     #collate report statistics
     reportstats = {}
