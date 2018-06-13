@@ -2,3 +2,5 @@
 crpm/__pycache__
 .RData
 .Rhistory
+.DS_Store
+experiments/
