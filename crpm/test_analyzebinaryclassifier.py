@@ -20,14 +20,13 @@ def test_solved_nestedcs():
     assert report["Accuracy"] >= .87
     assert report["F1Score"] >= .86
 
-def test_roc_will_plot():
+def will_roc_will_plot():
     """ test if roc output will plot properly"""
     import os
     import matplotlib.pyplot as plt
     from crpm.setup_nestedcs import setup_nestedcs
     from crpm.gradientdecent import gradientdecent
     from crpm.analyzebinaryclassifier import analyzebinaryclassifier
-
 
     #setup model
     model, data = setup_nestedcs()
