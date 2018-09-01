@@ -27,19 +27,26 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
 
 
     #bad starting point: reinitialize model if it has bad forces
-    while True:
+    norm = 0
+    #while True:
+    while norm < 1e-16 or norm > 1e16:
         #do one fwd-back propagation pass
         pred, state = fwdprop(data, model)
         cost, dloss = loss(lossname, pred, targets)
         forces = backprop(model, state, dloss)
 
         #check for bad forces
-        norm = np.linalg.norm(forces[-1]["fweight"])
+        #norm = np.linalg.norm(forces[-1]["fweight"])
+        maxf = []
+        maxw = []
+        for layer in forces:
+            index = layer["layer"]
+            maxf.append(np.max(abs(layer["fweight"])))
+            maxw.append(np.max(abs(model[index]["weight"])))
+        norm = np.max(np.abs(np.divide(maxf, maxw)))
 
         #exit condition
-        if norm > 1e-16:
-            break
-        else:
+        if norm < 1e-16 or norm > 1e16:
             #reint model
             for i in range(1, len(model)):
                 #print(i)
@@ -47,7 +54,9 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
                 nprev = model[i]["weight"].shape[1]
                 model[i]["weight"] = np.random.randn(ncurr, nprev)
                 model[i]["bias"] = np.zeros((ncurr, 1))
-            #print(norm,cost)
+            print("Runtime Warning in gradiendecent.py - reinitializing model",
+                  "max weight= ", np.max(maxw), ", max force= ", np.max(maxf))
+
 
     #check if using validation set
     novalidation = (validata is None) or (valitargets is None)
@@ -62,18 +71,43 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
     best_model = model
 
     #iterate training until cost converges - defined as when slope of costbuffer
-    #is less than 1e-8
-    while True:
+    #is less than or equal to 1e-8
+    slope = 1
+    count = 0
+    while abs(slope) > 1E-6:
+    #while abs(slope) > 1E-7:
+    #while abs(slope) > 1E-8:
+    #while abs(slope) > 1E-9:
+    #while abs(slope) > 1E-10:
+    #while True:
+
+        #warn if loop is taking too long
+        count += 1
+        if count > 10000:
+            print("Warning gradientdecent.py: Training is taking a long time! - training will end")
+            break
+
         #clear cost buffer
         costbuffer = []
+
+        #normalize forces through learning rate alpha
+        #max(forces) < 0.0001 max(weights)
+        maxf = []
+        maxw = []
+        for layer in forces:
+            index = layer["layer"]
+            maxf.append(np.max(abs(layer["fweight"])))
+            maxw.append(np.max(abs(model[index]["weight"])))
+        alpha = 0.0001* np.nanmax(np.abs(np.divide(maxw, maxf)))
+        #alpha = 0.0001 *  np.max(maxw)/np.max(maxf)
 
         #loop 100 training steps
         for i in tgrid:
 
             #normalize forces through learning rate alpha
             #mean abs(toplayer forces) < 0.0001 mean toplayer weights
-            norm = np.linalg.norm(forces[-1]["fweight"])
-            alpha = 0.0001 *  np.linalg.norm(model[-1]["weight"])/norm
+            #norm = np.linalg.norm(forces[-1]["fweight"])
+            #alpha = 0.0001 *  np.linalg.norm(model[-1]["weight"])/norm
 
             #update model
             for layer in forces:
@@ -95,8 +129,9 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
         else:
             pred, state = fwdprop(validata, model)
             ose, dloss = loss(lossname, pred, valitargets)
+
         #Record best out-sample error and save model
-        if ose < best_ose:
+        if ose <= best_ose:
             best_ose = ose
             best_model = model
 
@@ -105,8 +140,8 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
         slope = slope/tvar
 
         #exit condition
-        if abs(slope) <= 1E-8:
-            break
+        #if abs(slope) <= 1E-8:
+        #    break
 
     #get best model if validating otherwize use model at end of convergence
     if novalidation:

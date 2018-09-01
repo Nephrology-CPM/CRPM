@@ -6,9 +6,21 @@ def loss(name, pred, target):
     """returns result of loss function given name and predictions and targets
     """
     return {
-        "mse":mse(pred, target),
-        #"bce":bce(pred, target),
+        "bce":bce(pred, target),
+        "mse":mse(pred, target)
     }.get(name, mse(pred, target))
+
+#----------------------------------------------------
+
+def bce(pred, target):
+    """Binary cross entropy error function
+    """
+    pred1 = np.subtract(1, pred)
+    logpred = np.log(pred)
+    logpred1 = np.log(pred1)
+    dloss = np.where(target == 1, np.divide(-1, pred), np.divide(1, pred1))
+    cost = np.where(target == 1, logpred, logpred1).mean()
+    return -cost, dloss
 
 #----------------------------------------------------
 
@@ -18,17 +30,5 @@ def mse(pred, target):
     dloss = np.subtract(pred, target)
     cost = np.square(dloss).mean()/2.0
     return cost, dloss
-
-#----------------------------------------------------
-
-def bce(pred, target):
-    """Binary cross entropy error function
-    """
-    pred1 = np.subtract(1, pred)
-    targ1 = np.subtract(1, target)
-    dloss = np.add(np.divide(targ1, pred1), np.divide(target, pred))
-    cost = np.add(np.multiply(target, np.log(pred)),
-                  np.multiply(targ1, np.log(pred1))).mean()
-    return -cost, -dloss
 
 #----------------------------------------------------

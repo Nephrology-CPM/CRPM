@@ -23,3 +23,14 @@ def test_linear():
     assert activation("linear", stim).shape == (5, 7)
     assert np.all(dactivation("linear", stim) == 1)
     assert dactivation("linear", stim).shape == (5, 7)
+
+def test_relu():
+    """test relu function returns input for positive and .01 of input for
+    negative also check derivative returns ones where positive and .01 where
+    negative and both have same shape as input
+    """
+    stim = np.random.randn(5, 7)
+    assert np.all(activation("relu", stim) == np.where(stim > 0, stim, .01*stim))
+    assert activation("relu", stim).shape == (5, 7)
+    assert np.all(dactivation("relu", stim) == np.where(stim > 0, 1, .01))
+    assert dactivation("relu", stim).shape == (5, 7)

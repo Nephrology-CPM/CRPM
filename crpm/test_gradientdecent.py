@@ -23,37 +23,55 @@ def test_solve_numberadder():
     __, data = load_dataset("crpm/data/number_adder.csv")
     __, __ = gradientdecent(model, data[0:5,], data[-1,], "mse")
 
-    assert np.allclose(model[1]["weight"], 1.0, rtol=.001)
+    print(model[1]["weight"])
+
+    assert np.allclose(model[1]["weight"], 1.0, rtol=.0015)
 
 def test_solve_nestedcs():
     """test nested cs can be solved
     """
-    from crpm.ffn_bodyplan import init_ffn
-    from crpm.dataset import load_dataset
+
+    from crpm.setup_nestedcs import setup_nestedcs
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
     from crpm.gradientdecent import gradientdecent
-    from crpm.analyzebinaryclassifier import analyzebinaryclassifier
 
-    #manually create a bodyplan for nestedCs.csv data
-    bodyplan = [
-        {"layer":0, "n":2, "activation":"linear"},
-        {"layer":2, "n":1, "activation":"logistic"}
-        ]
+    #setup model
+    model, data = setup_nestedcs()
 
-    #create model
-    model = init_ffn(bodyplan)
-
-    #download nestedCs data
-    __, data = load_dataset("crpm/data/nestedCs.csv")
+    #calculate initial mean squared error
+    pred, __ = fwdprop(data[0:2,], model)
+    icost, __ = loss("mse", pred, data[-1,])
+    #print(icost)
 
     #train model
-    pred, __ = gradientdecent(model, data[0:2,], data[-1,], "mse")
+    pred, cost = gradientdecent(model, data[0:2,], data[-1,], "mse")
 
-    #analyze binary classifier
-    __, report = analyzebinaryclassifier(pred, data[-1,])
+    print(model)
+    assert icost > cost
+    assert cost < .046
 
-    #print(report)
-    #import matplotlib.pyplot as plt
-    #plt.scatter(*zip(*ROC))
-    #plt.show()
+def test_solve_nestedcs_bce():
+    """test nested cs can be solved
+    """
 
-    assert report["Accuracy"] > .80
+    from crpm.setup_nestedcs import setup_nestedcs
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
+    from crpm.gradientdecent import gradientdecent
+
+    #setup model
+    model, data = setup_nestedcs()
+
+    #calculate initial mean squared error
+    pred, __ = fwdprop(data[0:2,], model)
+    icost, __ = loss("bce", pred, data[-1,])
+
+    #train model
+    pred, cost = gradientdecent(model, data[0:2,], data[-1,], "bce")
+
+    print(model)
+    print(icost)
+    print(cost)
+    assert icost > cost
+    assert cost < .27

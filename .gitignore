@@ -3,4 +3,6 @@ crpm/__pycache__
 .RData
 .Rhistory
 .DS_Store
-experiments/
+build/
+crpm.egg-info/
+dist/
