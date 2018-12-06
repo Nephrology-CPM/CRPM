@@ -54,8 +54,8 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
                 nprev = model[i]["weight"].shape[1]
                 model[i]["weight"] = np.random.randn(ncurr, nprev)
                 model[i]["bias"] = np.zeros((ncurr, 1))
-            print("Runtime Warning in gradiendecent.py - reinitializing model",
-                  "max weight= ", np.max(maxw), ", max force= ", np.max(maxf))
+            #print("Runtime Warning in gradiendecent.py - reinitializing model",
+            #      "max weight= ", np.max(maxw), ", max force= ", np.max(maxf))
 
 
     #check if using validation set
