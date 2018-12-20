@@ -10,7 +10,7 @@ def fwdprop(data, model):
         data: An ndarray representing the vectorized values of M input samples
             arranged in columns with Nx features arranged in rows.
         model: A list of layer parameters represetning the model itself.
-            Each layer is a list with keys and shapes "weight":(n,nprev), and
+            Each layer is a dictionary with keys and shapes "weight":(n,nprev), and
             "bias" (n, 1).
 
     Returns:

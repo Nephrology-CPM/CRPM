@@ -5,15 +5,15 @@ def test_backprop_number_adder():
     """test that solved number adder will have zero forces with proper shape.
     """
     import numpy as np
+    from crpm.ffn_bodyplan import read_bodyplan
     from crpm.ffn_bodyplan import init_ffn
     from crpm.dataset import load_dataset
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
 
-    #manually create shallow bodyplan for number_adder.csv data
-    bodyplan = [{"layer":0, "n":5, "activation":"linear"}]
-    bodyplan.append({"layer":1, "n":1, "activation":"linear"})
+    #create shallow bodyplan for number_adder.csv data
+    bodyplan = read_bodyplan("crpm/data/shallowfornumberadder.csv")
 
     #create number_adder model
     addermodel = init_ffn(bodyplan)
@@ -36,15 +36,15 @@ def test_numadd_forcedir():
     """test that number adder with initial wieghts >1 will have negative forces.
     """
     import numpy as np
+    from crpm.ffn_bodyplan import read_bodyplan
     from crpm.ffn_bodyplan import init_ffn
     from crpm.dataset import load_dataset
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
 
-    #manually create shallow bodyplan for number_adder.csv data
-    bodyplan = [{"layer":0, "n":5, "activation":"linear"}]
-    bodyplan.append({"layer":1, "n":1, "activation":"linear"})
+    #create shallow bodyplan for number_adder.csv data
+    bodyplan = read_bodyplan("crpm/data/shallowfornumberadder.csv")
 
     #create number_adder model
     addermodel = init_ffn(bodyplan)

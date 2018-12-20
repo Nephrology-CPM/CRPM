@@ -36,6 +36,7 @@ def test_example_bodyplan():
 def test_init_ffn():
     """Test ffn is created properly from example_bodyplan.csv
     """
+    import numpy as np
 
     from crpm.ffn_bodyplan import read_bodyplan
     from crpm.ffn_bodyplan import init_ffn
@@ -70,3 +71,25 @@ def test_init_ffn():
     assert model[2]["activation"] == 'relu'
     assert model[3]["activation"] == 'relu'
     assert model[4]["activation"] == 'logistic'
+
+
+def test_init_ffn_types():
+    """check if elements in layer dictionaries are of the correct type
+    weights and biases should be ndarrays
+    """
+    import numpy as np
+
+    from crpm.ffn_bodyplan import read_bodyplan
+    from crpm.ffn_bodyplan import init_ffn
+
+    bodyplan = read_bodyplan("crpm/data/example_ffn_bodyplan.csv")
+    model = init_ffn(bodyplan)
+
+    for layer in model:
+        assert isinstance(layer["layer"], int)
+        assert isinstance(layer["n"], int)
+        assert isinstance(layer["activation"], str)
+        if layer["layer"] > 0:
+            assert isinstance(layer["regval"], float)
+            assert isinstance(layer["weight"],  np.ndarray)
+            assert isinstance(layer["bias"], np.ndarray)

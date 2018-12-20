@@ -3,9 +3,13 @@
 def test_solved_nestedcs():
     """test solved nestedcs will produce optimal threashold
     """
+    import numpy as np
     from crpm.setup_nestedcs import setup_nestedcs
     from crpm.gradientdecent import gradientdecent
     from crpm.analyzebinaryclassifier import analyzebinaryclassifier
+
+    #init numpy seed
+    np.random.seed(40017)
 
     #setup model
     model, data = setup_nestedcs()
