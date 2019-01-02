@@ -5,22 +5,22 @@ def test_solve_numberadder():
     """test number adder can be solved begining with weights = 1.1
     """
     import numpy as np
+    from crpm.ffn_bodyplan import read_bodyplan
     from crpm.ffn_bodyplan import init_ffn
     from crpm.dataset import load_dataset
     from crpm.gradientdecent import gradientdecent
 
-    #manually create shallow bodyplan for number_adder.csv data
-    bodyplan = [{"layer":0, "n":5, "activation":"linear"}]
-    bodyplan.append({"layer":1, "n":1, "activation":"linear"})
+    #create shallow bodyplan with 5 inputs and 1 output for numebr adder data
+    bodyplan = read_bodyplan("crpm/data/numberadder_bodyplan.csv")
 
-    #create number_adder model
+    #create numberadder model
     model = init_ffn(bodyplan)
 
     #manually set layer weights to 1.1 and biases to 0
     model[1]["weight"] = 1.1*np.ones(model[1]["weight"].shape)
 
-    #train number_adder model  with mean squared error
-    __, data = load_dataset("crpm/data/number_adder.csv")
+    #train numberadder model  with mean squared error
+    __, data = load_dataset("crpm/data/numberadder.csv")
     __, __ = gradientdecent(model, data[0:5,], data[-1,], "mse")
 
     print(model[1]["weight"])
@@ -31,10 +31,14 @@ def test_solve_nestedcs():
     """test nested cs can be solved
     """
 
+    import numpy as np
     from crpm.setup_nestedcs import setup_nestedcs
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.gradientdecent import gradientdecent
+
+    #init numpy seed
+    np.random.seed(40017)
 
     #setup model
     model, data = setup_nestedcs()
@@ -47,31 +51,36 @@ def test_solve_nestedcs():
     #train model
     pred, cost = gradientdecent(model, data[0:2,], data[-1,], "mse")
 
-    print(model)
+    #print(model)
+    #print(icost)
+    #print(cost)
     assert icost > cost
     assert cost < .046
 
 def test_solve_nestedcs_bce():
     """test nested cs can be solved
     """
-
+    import numpy as np
     from crpm.setup_nestedcs import setup_nestedcs
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.gradientdecent import gradientdecent
 
+    #init numpy seed
+    np.random.seed(40017)
+
     #setup model
     model, data = setup_nestedcs()
 
-    #calculate initial mean squared error
+    #calculate initial binary cross entropy error
     pred, __ = fwdprop(data[0:2,], model)
     icost, __ = loss("bce", pred, data[-1,])
 
     #train model
     pred, cost = gradientdecent(model, data[0:2,], data[-1,], "bce")
 
-    print(model)
-    print(icost)
-    print(cost)
+    #print(model)
+    #print(icost)
+    #print(cost)
     assert icost > cost
     assert cost < .27

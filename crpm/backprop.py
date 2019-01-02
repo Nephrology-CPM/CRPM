@@ -44,8 +44,15 @@ def backprop(model, state, dloss):
 
         #calculate layer derivative w.r.t. stimulus using dact of layer above
         dstim = dact * dactivation(layer["activation"], state[index]["stimulus"])
-        #calculate layer derivative w.r.t. weight and bias using dstim
+        #calculate layer derivative w.r.t. weight using dstim
         dweight = dstim.dot(state[index-1]["activity"].T)/norm
+        #add regularization term if specified by layer
+        if layer["regval"] > 0:
+            if layer["lreg"] == 1:
+                dweight += layer["regval"]*np.sign(layer["weight"])
+            elif layer["lreg"] == 2:
+                dweight += layer["regval"]*layer["weight"]
+        #calculate layer derivative w.r.t. bias using dstim
         dbias = np.sum(dstim, axis=1, keepdims=True)/norm
         #calculate next layer down deriv wrt activity
         dact = layer["weight"].T.dot(dstim)
