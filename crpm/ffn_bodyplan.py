@@ -28,7 +28,11 @@ def read_bodyplan(file):
             if "regval" in keys:
                 layer["regval"] = float(line[keys.index("regval")])
             else:
-                layer["regval"] = float(0)
+                layer["regval"] = float(0) #default regularization parameter
+            if "lreg" in keys:
+                layer["lreg"] = int(line[keys.index("lreg")])
+            else:
+                layer["lreg"] = int(1) #default regularization is L1
             bodyplan.append(layer)
     return bodyplan
 
@@ -65,9 +69,44 @@ def init_ffn(bodyplan):
             "layer":layer,
             "n":bodyplan[layer]['n'],
             "activation": bodyplan[layer]["activation"],
+            "lreg":bodyplan[layer]["lreg"],
             "regval":bodyplan[layer]["regval"],
             "weight": np.random.randn(ncurr, nprev), #random initial weights
             "bias": np.zeros((ncurr, 1)) # zeros for initial biases
             })
 
     return model
+
+def reinit_ffn(model):
+    """Reinitialize feed forward network model.
+
+    Args:
+        model: A previously created ffn model
+    Returns:
+        The input model with reinitialized weights and biases
+    """
+    import numpy as np
+
+    #init model as list holding data for each layer start with input layer
+    newmodel = []
+    newmodel.append({
+                "layer":0,
+                "n":model[0]['n'],
+                "activation": model[0]["activation"]
+                })
+
+    # init weights and biases for hidden layers and declare activation function
+    for layer in range(1, len(model)):
+        ncurr = model[layer]["n"]
+        nprev = model[layer-1]["n"]
+        newmodel.append({
+            "layer":layer,
+            "n":model[layer]['n'],
+            "activation": model[layer]["activation"],
+            "lreg":model[layer]["lreg"],
+            "regval":model[layer]["regval"],
+            "weight": np.random.randn(ncurr, nprev), #random initial weights
+            "bias": np.zeros((ncurr, 1)) # zeros for initial biases
+            })
+
+    return newmodel

@@ -4,14 +4,12 @@
 def setup_nestedcs():
     """ will return model and downloaded data."""
 
+    from crpm.ffn_bodyplan import read_bodyplan
     from crpm.ffn_bodyplan import init_ffn
     from crpm.dataset import load_dataset
 
-    #manually create a bodyplan for nestedCs.csv data
-    bodyplan = [
-        {"layer":0, "n":2, "activation":"linear"},
-        {"layer":1, "n":1, "activation":"logistic", "regval":0}
-        ]
+    #create model from  bodyplan file
+    bodyplan = read_bodyplan("crpm/data/nestedCs_bodyplan.csv")
 
     #create model
     model = init_ffn(bodyplan)
@@ -20,4 +18,3 @@ def setup_nestedcs():
     __, data = load_dataset("crpm/data/nestedCs.csv")
 
     return model, data
-    

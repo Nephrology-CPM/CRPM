@@ -1,7 +1,7 @@
 """ Test back propagation methods for FFNs.
 """
 
-def test_backprop_number_adder():
+def test_backprop_numberadder():
     """test that solved number adder will have zero forces with proper shape.
     """
     import numpy as np
@@ -12,17 +12,17 @@ def test_backprop_number_adder():
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
 
-    #create shallow bodyplan for number_adder.csv data
-    bodyplan = read_bodyplan("crpm/data/shallowfornumberadder.csv")
+    #create shallow bodyplan for numberadder.csv data
+    bodyplan = read_bodyplan("crpm/data/numberadder_bodyplan.csv")
 
-    #create number_adder model
+    #create numberadder model
     addermodel = init_ffn(bodyplan)
 
     #manually set layer 1 weights to 1 and biases to 0
     addermodel[1]["weight"] = np.ones(addermodel[1]["weight"].shape)
 
-    #compute forces using number_adder.csv data with mean squared error
-    __, data = load_dataset("crpm/data/number_adder.csv")
+    #compute forces using numberadder.csv data with mean squared error
+    __, data = load_dataset("crpm/data/numberadder.csv")
     pred, state = fwdprop(data[0:5,], addermodel)
     __, dloss = loss("mse", pred, data[-1,])
     forces = backprop(addermodel, state, dloss)
@@ -43,17 +43,17 @@ def test_numadd_forcedir():
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
 
-    #create shallow bodyplan for number_adder.csv data
-    bodyplan = read_bodyplan("crpm/data/shallowfornumberadder.csv")
+    #create shallow bodyplan for numberadder.csv data
+    bodyplan = read_bodyplan("crpm/data/numberadder_bodyplan.csv")
 
-    #create number_adder model
+    #create numberadder model
     addermodel = init_ffn(bodyplan)
 
     #manually set layer 1 weights to 1.1 and biases to 0
     addermodel[1]["weight"] = 1.1 * np.ones(addermodel[1]["weight"].shape)
 
-    #compute forces using number_adder.csv data with mean squared error
-    __, data = load_dataset("crpm/data/number_adder.csv")
+    #compute forces using numberadder.csv data with mean squared error
+    __, data = load_dataset("crpm/data/numberadder.csv")
     pred, state = fwdprop(data[0:5,], addermodel)
     __, dloss = loss("mse", pred, data[-1,])
     forces = backprop(addermodel, state, dloss)
