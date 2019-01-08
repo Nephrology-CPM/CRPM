@@ -1,7 +1,7 @@
 """ Neural network activation functions and their derivatives
 """
 import numpy as np
-
+import sys
 
 def activation(name, stimulus):
     """returns result of activation function given name and input
@@ -73,7 +73,11 @@ def dlinear(stimulus):
 def logistic(stimulus):
     """definition of logistic function
     """
-    return 1/(1 + np.exp(-stimulus))
+    y =1/(1 + np.exp(-stimulus))
+    y[y>=1] = 1 - sys.float_info.epsilon
+    y[y<=0] = sys.float_info.epsilon
+
+    return y
 
 def dlogistic(stimulus):
     """definition of deriv of logistic function with respect to stimulus
