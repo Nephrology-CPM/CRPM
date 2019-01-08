@@ -1,7 +1,7 @@
 """ NN training by gradient decent
 """
 
-def gradientdecent(model, data, targets, lossname, validata=None, valitargets=None):
+def gradientdecent(model, data, targets, lossname, validata=None, valitargets=None, maxiterations=10000):
     """train fnn model by gradient decent
 
         Args:
@@ -11,6 +11,7 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
             lossname:
             validata: data used to calculate out-sample error
             valitargets: targets used to calculate out-sample error
+            maxiteration: hard limit of learning iterations default is 10000
         Returns: final predictions and cost. Training will modify model.
     """
 
@@ -81,9 +82,9 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
     #while abs(slope) > 1E-10:
     #while True:
 
-        #warn if loop is taking too long
+        #exit loop if learning is taking too long
         count += 1
-        if count > 10000:
+        if count > int(maxiterations):
             print("Warning gradientdecent.py: Training is taking a long time! - training will end")
             break
 
