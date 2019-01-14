@@ -25,7 +25,7 @@ def test_solve_numberadder():
 
     print(model[1]["weight"])
 
-    assert np.allclose(model[1]["weight"], 1.0, rtol=.0015)
+    assert np.allclose(model[1]["weight"], 1.0, rtol=.005)
 
 def test_solve_nestedcs():
     """test nested cs can be solved
@@ -55,7 +55,7 @@ def test_solve_nestedcs():
     #print(icost)
     #print(cost)
     assert icost > cost
-    assert cost < .046
+    assert cost < .08
 
 def test_solve_nestedcs_bce():
     """test nested cs can be solved
@@ -83,4 +83,4 @@ def test_solve_nestedcs_bce():
     #print(icost)
     #print(cost)
     assert icost > cost
-    assert cost < .27
+    assert cost < .29
