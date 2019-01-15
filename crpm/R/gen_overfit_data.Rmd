@@ -1,0 +1,86 @@
+---
+title: "Generate Overfit Data"
+author: "Daniel Montemayor"
+date: "1/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This script will generate a dataset representing 48 features and one target. The objective is to create a training set that suffers from overfitting and a validation set that can reliably model the target. To achieve this, the training set is purposefully under sampled with nearly as many features as there are samples while the validation set is well sampled. The training set will contain 144 observations of the 48 features while the validation set will contain 14400 observations. The features are divided into 3 categories normal variables, shadow variables, and sham variables. Normal variables represent features that the target depends on. Shadow variables also represent features the target depends on, however, these features will be unavailable in the training set and validation sets. Sham variables are un-important; they represent variables the target does not depend on and will be mixed in along with the normal variables in the training and validation set. A distinction is made between important, non-important, and un-important features which we will describe later. There are 24 normal variables, 12 shadow variables, and 12 sham variables. The target will have either linear, square, or gausian dependance on the normal and shadow variables. All variables will sample either a Normal(mu=0, sigma=1) distribution or a Log-Normal(mu=0, sigma=1) distribution. There will be 6 important shadow variables, one for each dependance-distribution combination, i.e. linear(Normal(mu=0, sigma=1) ), or gaussian(Log-Normal(mu=0, sigma=1)). This is accomplished by a larger coefient of depenance for the important variables realtive to the non-important variables. The non-important variable coeficients will defined as 1 while the important variable coeficients will be defined as 2. Half of the normal variables will be important similar to the way the shadow variables were assigned, two for each dependance-distribution combination.
+```{r}
+#init dataframe with 48 features and 1 variable by 144+14400 observations
+nobs <- 14544
+data <- data.frame(matrix(ncol = 49, nrow = nobs))
+```
+LEt's divide the normal and log-normal variables equally. For each distribution we want 24 features representing 12 normal variables, 6 shadow variables, and 6 sham variables. Let's follow this naming convention for all 48 variables with last variable for target
+```{r}
+colnames(data) <- c(rep(c(rep("normal",12),rep("shadow",6),rep("sham",6)),2),"target")
+names(data)
+```
+Now, we need to sample the features, Let's start with the Normal(mu=0, sigma=1) distribution.
+```{r}
+#variables 1-24 sample Normal(mu=0, sigma=1)
+data[,1:24] <- apply(data[,1:24],2,function(x) rnorm(n=nobs, mean=0, sd=1))
+```
+Let's move on the the next 24 variables that will sample the Log-Normal(mu=0, sigma=1) distribution.
+```{r}
+#variables 25-48 sample Log-Normal(mu=0, sigma=1)
+data[,25:48] <- apply(data[,25:48],2,function(x) rlnorm(n=nobs, mean=0, sd=1))
+```
+Now, we define the target with linear, square, or gaussian dependance. We want an even number of dependancy types for each of the 28 variables with a particular distribution. For example, for the 24 normal variables we want 4 linear, 4 square, and 4 gaussian dependancies while for the 6 shadow variables we want 2 linear, 2 square, and 2 gaussian. Arrangin that variables like this allows us to assign the even variables as important variables and the even with as non-important.
+```{r}
+#define alternating important non-important variable constants
+konst <- rep(c(2,1),24)
+```
+```{r}
+#init target
+y <- rep(0,nobs)
+#loop over 2 types of distributions
+for(i in 0:1){
+  #features 1-4, 13-14, and 19-20 are linear, don't count last sham variable indecies
+  idx <- c(1:4,13:14)+i*24
+  colnames(data)[idx] <- paste(colnames(data)[idx], "lin", sep="_")
+  y <- y + rowSums(t( t(data[,idx]) * konst[idx]))
+
+  #features 5-8, 15-16, and 21-22 are square, don't count last sham variable indecies
+  idx <- c(5:8,15:16)+i*24
+  colnames(data)[idx] <- paste(colnames(data)[idx], "lin", sep="_")
+  y <- y + rowSums(t( t(data[,idx]**2) * konst[idx]))
+
+  #features 9-12, 17-18, and 23-24 are gaussian, don't count last sham variable indecies
+  idx <- c(9:12,17:18)+i*24
+  colnames(data)[idx] <- paste(colnames(data)[idx], "lin", sep="_")
+  y <- y + rowSums(t( t(exp(-data[,idx]**2)) * konst[idx]))
+}
+#assign target
+data$target <- y
+```
+Let's have a look at the target now.
+```{r}
+summary(data$target)
+str(data$target)
+plot(data$target)
+hist(data$target)
+boxplot(data$target)
+```
+Looks like the target can benefit from a log transform.
+```{r}
+data$target <- log2(data$target)
+summary(data$target)
+str(data$target)
+plot(data$target)
+hist(data$target)
+boxplot(data$target)
+```
+Now let's remove the shadow variables and save the data.
+```{r}
+#Save total dataset
+write.csv(data,"../data/overfit_all.csv")
+
+#Save training and validation set without shadow variables
+data <- data[,-grep("^shadow",names(data))]
+write.csv(data[1:144,],"../data/overfit_training.csv")
+write.csv(data[145:14544,],"../data/overfit_validation.csv")
+```

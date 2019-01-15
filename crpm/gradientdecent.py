@@ -1,7 +1,33 @@
 """ NN training by gradient decent
 """
 
-def gradientdecent(model, data, targets, lossname, validata=None, valitargets=None, maxiterations=10000):
+def model_has_bad_forces(model, data, targets, lossname):
+    """ Does input data result in model forces that break integrator?"""
+    import numpy as np
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
+    from crpm.backprop import backprop
+
+    #do one fwd-back propagation pass
+    pred, state = fwdprop(data, model)
+    _, dloss = loss(lossname, pred, targets)
+    forces = backprop(model, state, dloss)
+
+    #check for huge forces relative to its respective weight
+    huge = 1E16
+    maxf = []
+    #maxw = []
+    for layer in forces:
+        index = layer["layer"]
+        #maxf.append(np.max(abs(layer["fweight"])))
+        #maxw.append(np.max(abs(model[index]["weight"])))
+        maxf.append(np.max(np.abs(np.divide(layer["fweight"],model[index]["weight"]))))
+    norm = np.max(maxf)
+
+    #return True if forces are huge
+    return norm > huge
+
+def gradientdecent(model, data, targets, lossname, validata=None, valitargets=None, maxepoch=1E6, earlystop=False):
     """train fnn model by gradient decent
 
         Args:
@@ -19,96 +45,66 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
+    from crpm.ffn_bodyplan import reinit_ffn
 
     #convergence test constants
-    niter = 100
-    tgrid = np.array(range(niter))
+    alpha_norm = 5E-5 #scales learning rate by max force relative to weight
+    nbuffer = 500
+    maxslope = -1E-6 #max learning slope should be negative but close to zero
+    tgrid = np.array(range(nbuffer))
     tsum = np.sum(tgrid)
-    tvar = niter*np.sum(np.multiply(tgrid, tgrid))-tsum*tsum
-
+    tvar = nbuffer*np.sum(np.multiply(tgrid, tgrid))-tsum*tsum
 
     #bad starting point: reinitialize model if it has bad forces
-    norm = 0
-    #while True:
-    while norm < 1e-16 or norm > 1e16:
-        #do one fwd-back propagation pass
-        pred, state = fwdprop(data, model)
-        cost, dloss = loss(lossname, pred, targets)
-        forces = backprop(model, state, dloss)
+    while model_has_bad_forces(model, data, targets, lossname):
+        print("Runtime Warning in gradiendecent.py - reinitializing model")
+        model = reinit_ffn(model)
 
-        #check for bad forces
-        #norm = np.linalg.norm(forces[-1]["fweight"])
-        maxf = []
-        maxw = []
-        for layer in forces:
-            index = layer["layer"]
-            maxf.append(np.max(abs(layer["fweight"])))
-            maxw.append(np.max(abs(model[index]["weight"])))
-        norm = np.max(np.abs(np.divide(maxf, maxw)))
-
-        #exit condition
-        if norm < 1e-16 or norm > 1e16:
-            #reint model
-            for i in range(1, len(model)):
-                #print(i)
-                ncurr = model[i]["weight"].shape[0]
-                nprev = model[i]["weight"].shape[1]
-                model[i]["weight"] = np.random.randn(ncurr, nprev)
-                model[i]["bias"] = np.zeros((ncurr, 1))
-            #print("Runtime Warning in gradiendecent.py - reinitializing model",
-            #      "max weight= ", np.max(maxw), ", max force= ", np.max(maxf))
-
+    #calculate initial forces
+    pred, state = fwdprop(data, model)
+    cost, dloss = loss(lossname, pred, targets)
+    forces = backprop(model, state, dloss)
 
     #check if using validation set
-    novalidation = (validata is None) or (valitargets is None)
-    #if so - calculate starting out-sample error (ose)
-    if novalidation:
-        ose = cost
-    else:
+    is_validating = not ((validata is None) or (valitargets is None))
+    #if so - calculate starting out-sample error
+    if is_validating:
         pred, state = fwdprop(validata, model)
-        ose, dloss = loss(lossname, pred, valitargets)
-    #calculate best out-sample error
-    best_ose = ose
+        cost, dloss = loss(lossname, pred, valitargets)
+
+    #init best error and model
+    best_cost = cost
     best_model = model
 
-    #iterate training until cost converges - defined as when slope of costbuffer
-    #is less than or equal to 1e-8
-    slope = 1
+    #iterate training until:
+    # 1) cost converges - defined as when slope of costbuffer is greater than to -1e-6
+    # or
+    # 2) out-sample error increases
+    # or
+    # 3) cost diverges - defined true when cost > 1E16
+    # or
+    # 4) too many iterations - hardcoded to ensure loop exit
     count = 0
-    while abs(slope) > 1E-6:
-    #while abs(slope) > 1E-7:
-    #while abs(slope) > 1E-8:
-    #while abs(slope) > 1E-9:
-    #while abs(slope) > 1E-10:
-    #while True:
-
-        #exit loop if learning is taking too long
-        count += 1
-        if count > int(maxiterations):
-            print("Warning gradientdecent.py: Training is taking a long time! - training will end")
-            break
+    continuelearning = True
+    while continuelearning:
 
         #clear cost buffer
         costbuffer = []
 
-        #normalize forces through learning rate alpha
-        #max(forces) < 0.0001 max(weights)
+        #normalize learning rate alpha based on current forces
         maxf = []
         maxw = []
         for layer in forces:
             index = layer["layer"]
             maxf.append(np.max(abs(layer["fweight"])))
             maxw.append(np.max(abs(model[index]["weight"])))
-        alpha = 0.0001* np.nanmax(np.abs(np.divide(maxw, maxf)))
-        #alpha = 0.0001 *  np.max(maxw)/np.max(maxf)
+        alpha = alpha_norm* np.nanmax(np.abs(np.divide(maxw, maxf)))
 
-        #loop 100 training steps
+        #loop for training steps in buffer
         for i in tgrid:
 
-            #normalize forces through learning rate alpha
-            #mean abs(toplayer forces) < 0.0001 mean toplayer weights
-            #norm = np.linalg.norm(forces[-1]["fweight"])
-            #alpha = 0.0001 *  np.linalg.norm(model[-1]["weight"])/norm
+            #update current learning step
+            count += 1
 
             #update model
             for layer in forces:
@@ -116,7 +112,7 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
                 model[index]["weight"] = model[index]["weight"] + alpha * layer["fweight"]
                 model[index]["bias"] = model[index]["bias"] + alpha * layer["fbias"]
 
-            #do one fwd-back propagation pass
+            #compute forces
             pred, state = fwdprop(data, model)
             cost, dloss = loss(lossname, pred, targets)
             forces = backprop(model, state, dloss)
@@ -124,38 +120,47 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
             #record cost
             costbuffer.append(cost)
 
-        #calculate out-sample error (ose)
-        if novalidation:
-            ose = cost
-        else:
-            pred, state = fwdprop(validata, model)
-            ose, dloss = loss(lossname, pred, valitargets)
-
-        #Record best out-sample error and save model
-        if ose <= best_ose:
-            best_ose = ose
-            best_model = model
-
         #calculate cost slope to check for convergence
-        slope = niter*np.sum(np.multiply(tgrid, costbuffer))-tsum*np.sum(costbuffer)
+        slope = nbuffer*np.sum(np.multiply(tgrid, costbuffer))-tsum*np.sum(costbuffer)
         slope = slope/tvar
 
-        #exit condition
-        #if abs(slope) <= 1E-8:
-        #    break
+        #calculate out-sample error
+        if is_validating:
+            pred, _ = fwdprop(validata, model)
+            cost, _ = loss(lossname, pred, valitargets)
 
-    #get best model if validating otherwize use model at end of convergence
-    if novalidation:
-        model = best_model
+        #Record best error and save model
+        if cost <= best_cost:
+            best_cost = cost
+            best_model = model
 
-    #calculate final predictions and cost
-    if novalidation:
-        pred, __ = fwdprop(data, model)
-        cost, __ = loss(lossname, pred, targets)
+        # - EXIT CONDITIONS -
+        #exit if learning is taking too long
+        if count > int(maxepoch):
+            print("Warning gradientdecent.py: Training is taking a long time! - Try increaseing maxepoch - Training will end")
+            continuelearning = False
+        #exit if learning has plateaued
+        if slope > maxslope:
+            continuelearning = False
+        #exit if early stopping and error has risen
+        if  earlystop and cost > best_cost:
+            print("early stopping")
+            continuelearning = False
+        #exit if cost has diverged
+        if cost > 1E16:
+            print("Warning gradientdecent.py: diverging cost function - try lowering learning rate or inc regularization constant - training will end.")
+            continuelearning = False
+
+    #return best model
+    model = best_model
+
+    #calculate final predictions and cost on best model
+    if is_validating:
+        pred, _ = fwdprop(validata, model)
+        cost, _ = loss(lossname, pred, valitargets)
     else:
-        pred, __ = fwdprop(validata, model)
-        cost, __ = loss(lossname, pred, valitargets)
-
+        pred, _ = fwdprop(data, model)
+        cost, _ = loss(lossname, pred, targets)
 
     #return predictions and cost
     return pred, cost

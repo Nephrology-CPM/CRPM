@@ -38,7 +38,7 @@ def test_regval_reduces_uncorrel():
     model, data = setup_multicorrel()
     #manually set regularization term
     model[1]["lreg"] = 1
-    model[1]["regval"] = 75
+    model[1]["regval"] = 100#75
 
     #train L1 regularized model
     __, cost1 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
@@ -67,12 +67,12 @@ def test_regval_reduces_uncorrel():
     #if norm > 0: weight1 = weight1 / norm
     #norm = np.linalg.norm(weight2)
     #if norm > 0: weight2 = weight2/ norm
-    #print(weight0)
-    #print(weight1)
-    #print(weight2)
-    #print(cost0)
-    #print(cost1)
-    #print(cost2)
+    print(weight0)
+    print(weight1)
+    print(weight2)
+    print(cost0)
+    print(cost1)
+    print(cost2)
 
     assert abs(weight0[0,2]) > abs(weight1[0,2])
     assert abs(weight0[0,2]) > abs(weight2[0,2])
@@ -215,7 +215,7 @@ def test_regval_reduces_correl():
     assert abs(weight0[0,2]) > abs(weight1[0,2])
     assert abs(weight0[0,2]) > abs(weight2[0,2])
     assert abs(weight2[0,2]) != abs(weight1[0,2])
-    
+
 '''
 def test_calc_regval_dist():
     """ test that regval + sigma is yeilds a more parsimonious model. Example function is
