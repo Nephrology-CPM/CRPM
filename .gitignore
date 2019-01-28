@@ -7,3 +7,4 @@ build/
 crpm.egg-info/
 dist/
 ~*
+*.html
