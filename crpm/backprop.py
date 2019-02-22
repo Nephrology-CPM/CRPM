@@ -4,6 +4,28 @@
 import numpy as np
 from crpm.activationfunctions import dactivation
 
+def model_has_bad_forces(model, data, targets, lossname):
+    """ Does input data result in model forces that break integrator?"""
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
+
+    #do one fwd-back propagation pass
+    pred, state = fwdprop(data, model)
+    _, dloss = loss(lossname, pred, targets)
+    forces = backprop(model, state, dloss)
+
+    #check for huge forces relative to its respective weight
+    huge = 1E16
+    maxf = []
+    #maxw = []
+    for layer in forces:
+        index = layer["layer"]
+        maxf.append(np.max(np.abs(np.divide(layer["fweight"],model[index]["weight"]))))
+    norm = np.max(maxf)
+
+    #return True if forces are huge
+    return norm > huge
+
 
 def backprop(model, state, dloss):
     """ Compute network forces based on activity and loss metric
