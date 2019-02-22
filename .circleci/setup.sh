@@ -31,7 +31,7 @@ if [[ ! -d $WORKSPACE/miniconda ]]; then
     conda config --system --add channels conda-forge
     #conda config --system --add channels bioconda
 
-    # step 3: install bioconda-utils and test requirements
+    # step 3: install miniconda requirements
     conda install -y --file .circleci/requirements.txt --file requirements.txt
 
     # step 4: cleanup
@@ -39,7 +39,6 @@ if [[ ! -d $WORKSPACE/miniconda ]]; then
 
     # Add local channel as highest priority
     conda index $WORKSPACE/miniconda/conda-bld/linux-64 $WORKSPACE/miniconda/conda-bld/osx-64 $WORKSPACE/miniconda/conda-bld/noarch
-    #conda index $WORKSPACE/miniconda/conda-bld/
     conda config --system --add channels file://$WORKSPACE/miniconda/conda-bld
 fi
 
