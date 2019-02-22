@@ -72,7 +72,9 @@ def init_ffn(bodyplan):
             "lreg":bodyplan[layer]["lreg"],
             "regval":bodyplan[layer]["regval"],
             "weight": np.random.randn(ncurr, nprev), #random initial weights
-            "bias": np.zeros((ncurr, 1)) # zeros for initial biases
+            "bias": np.zeros((ncurr, 1)), # zeros for initial biases
+            "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
+            "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
             })
 
     return model
@@ -106,7 +108,45 @@ def reinit_ffn(model):
             "lreg":model[layer]["lreg"],
             "regval":model[layer]["regval"],
             "weight": np.random.randn(ncurr, nprev), #random initial weights
-            "bias": np.zeros((ncurr, 1)) # zeros for initial biases
+            "bias": np.zeros((ncurr, 1)), # zeros for initial biases
+            "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
+            "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
             })
 
+    return newmodel
+
+def copy_ffn(model):
+    """Copy feed forward network model.
+
+    Args:
+        model: A previously created ffn model
+    Returns:
+        A copy of the model
+    """
+    import numpy as np
+    import copy
+
+    #init model as list holding data for each layer start with input layer
+    newmodel = []
+    newmodel.append({
+                "layer":0,
+                "n":copy.copy(model[0]['n']),
+                "activation": copy.copy(model[0]["activation"])
+                })
+
+    # init weights and biases for hidden layers and declare activation function
+    for layer in range(1, len(model)):
+        ncurr = model[layer]["n"]
+        nprev = model[layer-1]["n"]
+        newmodel.append({
+            "layer":layer,
+            "n":copy.copy(model[layer]['n']),
+            "activation": copy.copy(model[layer]["activation"]),
+            "lreg":copy.copy(model[layer]["lreg"]),
+            "regval":copy.copy(model[layer]["regval"]),
+            "weight": np.copy(model[layer]["weight"]),
+            "bias": np.copy(model[layer]["bias"]),
+            "weightdot": np.copy(model[layer]["weightdot"]),
+            "biasdot": np.copy(model[layer]["biasdot"])
+            })
     return newmodel

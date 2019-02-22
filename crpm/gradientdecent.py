@@ -1,32 +1,6 @@
 """ NN training by gradient decent
 """
 
-def model_has_bad_forces(model, data, targets, lossname):
-    """ Does input data result in model forces that break integrator?"""
-    import numpy as np
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
-    from crpm.backprop import backprop
-
-    #do one fwd-back propagation pass
-    pred, state = fwdprop(data, model)
-    _, dloss = loss(lossname, pred, targets)
-    forces = backprop(model, state, dloss)
-
-    #check for huge forces relative to its respective weight
-    huge = 1E16
-    maxf = []
-    #maxw = []
-    for layer in forces:
-        index = layer["layer"]
-        #maxf.append(np.max(abs(layer["fweight"])))
-        #maxw.append(np.max(abs(model[index]["weight"])))
-        maxf.append(np.max(np.abs(np.divide(layer["fweight"],model[index]["weight"]))))
-    norm = np.max(maxf)
-
-    #return True if forces are huge
-    return norm > huge
-
 def gradientdecent(model, data, targets, lossname, validata=None, valitargets=None, maxepoch=1E6, earlystop=False):
     """train fnn model by gradient decent
 
@@ -45,7 +19,9 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
+    from crpm.backprop import model_has_bad_forces
     from crpm.ffn_bodyplan import reinit_ffn
+    from crpm.ffn_bodyplan import copy_ffn
 
     #convergence test constants
     alpha_norm = 5E-5 #scales learning rate by max force relative to weight
@@ -73,8 +49,8 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
         cost, dloss = loss(lossname, pred, valitargets)
 
     #init best error and model
-    best_cost = cost
-    best_model = model
+    best_cost = np.copy(cost)
+    best_model = copy_ffn(model)
 
     #iterate training until:
     # 1) cost converges - defined as when slope of costbuffer is greater than to -1e-6
@@ -131,8 +107,8 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
 
         #Record best error and save model
         if cost <= best_cost:
-            best_cost = cost
-            best_model = model
+            best_cost = np.copy(cost)
+            best_model = copy_ffn(model)
 
         # - EXIT CONDITIONS -
         #exit if learning is taking too long
@@ -152,7 +128,7 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
             continuelearning = False
 
     #return best model
-    model = best_model
+    model = copy_ffn(best_model)
 
     #calculate final predictions and cost on best model
     if is_validating:

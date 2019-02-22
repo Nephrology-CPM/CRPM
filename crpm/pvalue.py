@@ -45,3 +45,53 @@ def pvalue(variable=None, hypothesis=None, alpha=.05):
         scanprob.append((prob <= val).sum() / variable.size)
 
     return prob, scanprob, np.sum(prob) / alphagrid.size, (prob <= alpha).sum() /variable.size
+
+def lefttailpvalue(variable=None, hypothesis=None):
+    """ calcualte left-tail pvalues
+    """
+    #set model
+    if variable is None:
+        variable = np.random.beta(a=3, b=5, size=5000)
+
+    else:
+        variable = np.array(variable)
+
+    #set null-hypothesis
+    if hypothesis is None:
+        hypothesis = np.random.beta(a=5, b=5, size=1000)
+    else:
+        hypothesis = np.array(hypothesis)
+
+    #calculate prob of left-tail event p(H<=x|H) for every instance of X
+    prob = []
+    for var in variable:
+        prob.append((hypothesis <= var).sum())
+    #normalize p
+    prob = np.divide(prob, hypothesis.size)
+
+    return prob
+
+def righttailpvalue(variable=None, hypothesis=None):
+    """ calcualte left-tail pvalues
+    """
+    #set model
+    if variable is None:
+        variable = np.random.beta(a=3, b=5, size=5000)
+
+    else:
+        variable = np.array(variable)
+
+    #set null-hypothesis
+    if hypothesis is None:
+        hypothesis = np.random.beta(a=5, b=5, size=1000)
+    else:
+        hypothesis = np.array(hypothesis)
+
+    #calculate prob of right-tail event p(H>=x|H) for every instance of X
+    prob = []
+    for var in variable:
+        prob.append((hypothesis >= var).sum())
+    #normalize p
+    prob = np.divide(prob, hypothesis.size)
+
+    return prob

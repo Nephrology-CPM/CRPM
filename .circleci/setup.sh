@@ -31,7 +31,7 @@ if [[ ! -d $WORKSPACE/miniconda ]]; then
     conda config --system --add channels conda-forge
     #conda config --system --add channels bioconda
 
-    # step 3: install bioconda-utils and test requirements
+    # step 3: install miniconda requirements
     conda install -y --file .circleci/requirements.txt --file requirements.txt
 
     # step 4: cleanup

@@ -25,4 +25,4 @@ def test_fwdprop_numberadder():
     depvars = data[-1,]
     prediction, __ = fwdprop(indepvars, model)
 
-    assert np.all(depvars == prediction)
+    assert np.allclose(depvars, prediction, rtol=1E-7)
