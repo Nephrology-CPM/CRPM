@@ -1,1 +1,1 @@
-conda-build
+conda-build==3.13.0
