@@ -136,8 +136,6 @@ def copy_ffn(model):
 
     # init weights and biases for hidden layers and declare activation function
     for layer in range(1, len(model)):
-        ncurr = model[layer]["n"]
-        nprev = model[layer-1]["n"]
         newmodel.append({
             "layer":layer,
             "n":copy.copy(model[layer]['n']),

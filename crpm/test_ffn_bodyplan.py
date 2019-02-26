@@ -36,7 +36,6 @@ def test_example_bodyplan():
 def test_init_ffn():
     """Test ffn is created properly from example_bodyplan.csv
     """
-    import numpy as np
 
     from crpm.ffn_bodyplan import read_bodyplan
     from crpm.ffn_bodyplan import init_ffn
@@ -91,5 +90,5 @@ def test_init_ffn_types():
         assert isinstance(layer["activation"], str)
         if layer["layer"] > 0:
             assert isinstance(layer["regval"], float)
-            assert isinstance(layer["weight"],  np.ndarray)
+            assert isinstance(layer["weight"], np.ndarray)
             assert isinstance(layer["bias"], np.ndarray)

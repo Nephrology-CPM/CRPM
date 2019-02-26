@@ -42,4 +42,4 @@ conda env remove -n CRPM
 ## Project Goals
 + implement a self organizing map framework
 + implement a Monte-Carlo hyper-parameterization routine for deep neural networks
-+ implement a new stochastic learing algorithm
++ implement a new stochastic learing algorithm (done)

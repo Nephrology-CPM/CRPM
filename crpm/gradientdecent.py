@@ -1,7 +1,8 @@
 """ NN training by gradient decent
 """
 
-def gradientdecent(model, data, targets, lossname, validata=None, valitargets=None, maxepoch=1E6, earlystop=False):
+def gradientdecent(model, data, targets, lossname, validata=None,
+                   valitargets=None, maxepoch=1E6, earlystop=False):
     """train fnn model by gradient decent
 
         Args:
@@ -16,11 +17,10 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
     """
 
     import numpy as np
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
-    from crpm.backprop import backprop
-    from crpm.backprop import model_has_bad_forces
-    from crpm.ffn_bodyplan import reinit_ffn
+    from crpm.dynamics import setupdynamics
+    from crpm.dynamics import normalizelearningrate
+    from crpm.dynamics import computecost
+    from crpm.dynamics import computeforces
     from crpm.ffn_bodyplan import copy_ffn
 
     #convergence test constants
@@ -31,22 +31,22 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
     tsum = np.sum(tgrid)
     tvar = nbuffer*np.sum(np.multiply(tgrid, tgrid))-tsum*tsum
 
-    #bad starting point: reinitialize model if it has bad forces
-    while model_has_bad_forces(model, data, targets, lossname):
-        print("Runtime Warning in gradiendecent.py - reinitializing model")
-        model = reinit_ffn(model)
-
-    #calculate initial forces
-    pred, state = fwdprop(data, model)
-    cost, dloss = loss(lossname, pred, targets)
-    forces = backprop(model, state, dloss)
+    #setup dynamics
+    forces = setupdynamics(model, data, targets, lossname)
 
     #check if using validation set
     is_validating = not ((validata is None) or (valitargets is None))
-    #if so - calculate starting out-sample error
-    if is_validating:
-        pred, state = fwdprop(validata, model)
-        cost, dloss = loss(lossname, pred, valitargets)
+
+    #define out-sample error calculator
+    def out_sample_error():
+        if is_validating:
+            pred, cost = computecost(model, validata, valitargets, lossname)
+        else:
+            pred, cost = computecost(model, data, targets, lossname)
+        return pred, cost
+
+    #calculate out-sample error
+    _, cost = out_sample_error()
 
     #init best error and model
     best_cost = np.copy(cost)
@@ -68,13 +68,7 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
         costbuffer = []
 
         #normalize learning rate alpha based on current forces
-        maxf = []
-        maxw = []
-        for layer in forces:
-            index = layer["layer"]
-            maxf.append(np.max(abs(layer["fweight"])))
-            maxw.append(np.max(abs(model[index]["weight"])))
-        alpha = alpha_norm* np.nanmax(np.abs(np.divide(maxw, maxf)))
+        alpha = normalizelearningrate(model, forces, alpha_norm)
 
         #loop for training steps in buffer
         for i in tgrid:
@@ -89,11 +83,10 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
                 model[index]["bias"] = model[index]["bias"] + alpha * layer["fbias"]
 
             #compute forces
-            pred, state = fwdprop(data, model)
-            cost, dloss = loss(lossname, pred, targets)
-            forces = backprop(model, state, dloss)
+            forces = computeforces(model, data, targets, lossname)
 
             #record cost
+            _, cost = computecost(model, data, targets, lossname)
             costbuffer.append(cost)
 
         #calculate cost slope to check for convergence
@@ -101,9 +94,7 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
         slope = slope/tvar
 
         #calculate out-sample error
-        if is_validating:
-            pred, _ = fwdprop(validata, model)
-            cost, _ = loss(lossname, pred, valitargets)
+        _, cost = out_sample_error()
 
         #Record best error and save model
         if cost <= best_cost:
@@ -113,7 +104,8 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
         # - EXIT CONDITIONS -
         #exit if learning is taking too long
         if count > int(maxepoch):
-            print("Warning gradientdecent.py: Training is taking a long time! - Try increaseing maxepoch - Training will end")
+            print("Warning gradientdecent.py: Training is taking a long time!"+
+                  " - Try increaseing maxepoch - Training will end")
             continuelearning = False
         #exit if learning has plateaued
         if slope > maxslope:
@@ -124,19 +116,13 @@ def gradientdecent(model, data, targets, lossname, validata=None, valitargets=No
             continuelearning = False
         #exit if cost has diverged
         if cost > 1E16:
-            print("Warning gradientdecent.py: diverging cost function - try lowering learning rate or inc regularization constant - training will end.")
+            print("Warning gradientdecent.py: diverging cost function "+
+                  "- try lowering learning rate or inc regularization constant "+
+                  "- training will end.")
             continuelearning = False
 
     #return best model
     model = copy_ffn(best_model)
 
-    #calculate final predictions and cost on best model
-    if is_validating:
-        pred, _ = fwdprop(validata, model)
-        cost, _ = loss(lossname, pred, valitargets)
-    else:
-        pred, _ = fwdprop(data, model)
-        cost, _ = loss(lossname, pred, targets)
-
     #return predictions and cost
-    return pred, cost
+    return out_sample_error()

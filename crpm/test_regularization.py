@@ -8,8 +8,6 @@ def test_regval_reduces_uncorrel():
 
     import numpy as np
     from crpm.setup_multicorrel import setup_multicorrel
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
@@ -19,64 +17,49 @@ def test_regval_reduces_uncorrel():
     model, data = setup_multicorrel()
 
     #get data dimensions
-    nvar = data.shape[0]
     nobv = data.shape[1]
 
     # partition training and testing data
-    train = data[0:3,0:nobv//2]
-    target = data[-1,0:nobv//2]
-    vtrain = data[0:3,nobv//2:nobv]
-    vtarget = data[-1,nobv//2:nobv]
+    train = data[0:3, 0:nobv//2]
+    target = data[-1, 0:nobv//2]
+    vtrain = data[0:3, nobv//2:nobv]
+    vtarget = data[-1, nobv//2:nobv]
 
     #train model with mean squared error
-    __, cost0 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight0 = model[1]["weight"]
 
     #re-init model
     model, data = setup_multicorrel()
+
     #manually set regularization term
     model[1]["lreg"] = 1
     model[1]["regval"] = 100#75
 
     #train L1 regularized model
-    __, cost1 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight1 = model[1]["weight"]
 
     #re-init model
     model, data = setup_multicorrel()
+
     #manually set regularization term
     model[1]["lreg"] = 2
     model[1]["regval"] = 4
 
     #train L2 regularized model
-    __, cost2 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight2 = model[1]["weight"]
 
-    #print(weight0)
-    #print(weight1)
-    #print(weight2)
-    #norm = np.linalg.norm(weight0)
-    #if norm > 0: weight0 = weight0 / norm
-    #norm = np.linalg.norm(weight1)
-    #if norm > 0: weight1 = weight1 / norm
-    #norm = np.linalg.norm(weight2)
-    #if norm > 0: weight2 = weight2/ norm
-    print(weight0)
-    print(weight1)
-    print(weight2)
-    print(cost0)
-    print(cost1)
-    print(cost2)
-
-    assert abs(weight0[0,2]) > abs(weight1[0,2])
-    assert abs(weight0[0,2]) > abs(weight2[0,2])
-    assert abs(weight2[0,2]) != abs(weight1[0,2])
+    assert abs(weight0[0, 2]) > abs(weight1[0, 2])
+    assert abs(weight0[0, 2]) > abs(weight2[0, 2])
+    assert abs(weight2[0, 2]) != abs(weight1[0, 2])
 
 def test_regval_reduces_correl():
     """ test that regularization term will reduce the weight assoctiated with
@@ -86,30 +69,27 @@ def test_regval_reduces_correl():
     value 0.5 while x3 is uncorrelated with both x1 and x2."""
 
     import numpy as np
-    from crpm.setup_multicorrel import setup_multicorrel_C
     from crpm.ffn_bodyplan import reinit_ffn
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
+    from crpm.setup_multicorrel import setup_multicorrel_c
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
     np.random.seed(40017)
 
     #setup model with no regularization
-    model, data = setup_multicorrel_C()
+    model, data = setup_multicorrel_c()
 
     #get data dimensions
-    nvar = data.shape[0]
     nobv = data.shape[1]
 
     # partition training and testing data
-    train = data[0:3,0:nobv//2]
-    target = data[-1,0:nobv//2]
-    vtrain = data[0:3,nobv//2:nobv]
-    vtarget = data[-1,nobv//2:nobv]
+    train = data[0:3, 0:nobv//2]
+    target = data[-1, 0:nobv//2]
+    vtrain = data[0:3, nobv//2:nobv]
+    vtarget = data[-1, nobv//2:nobv]
 
     #train model with mean squared error
-    __, cost0 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight0 = model[1]["weight"]
@@ -130,14 +110,16 @@ def test_regval_reduces_correl():
     #    #set regularization term to between lmin and alpha
     #    model[1]["regval"] = (lmin+alpha)/2.0
     #    #train L1 regularized model
-    #    __, costl = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    #    __, costl = gradientdecent(model, train, target, "mse",
+    #                               validata=vtrain, valitargets=vtarget)
     #    #RIGHT HAND SIDE
     #    #re-init model
     #    model = reinit_ffn(model)
     #    #set regularization term to between lmax and alpha
     #    model[1]["regval"] = (lmax+alpha)/2.0
     #    #train L1 regularized model
-    #    __, costr = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    #    __, costr = gradientdecent(model, train, target, "mse",
+    #                               validata=vtrain, valitargets=vtarget)
     #    #set new boundaries
     #    if costl < costr:
     #        lmax = alpha #set right hand boundary to alpha
@@ -151,10 +133,10 @@ def test_regval_reduces_correl():
     model[1]["regval"] = 13.92578125#(lmin+lmax)/2.0
     #model[1]["regval"] = (lmin+lmax)/2.0
     #train L1 regularized model
-    __, cost1 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights and regval
-    alpha1 = model[1]["regval"]
+    #alpha1 = model[1]["regval"]
     weight1 = model[1]["weight"]
 
     #switch to L2 regularization
@@ -173,14 +155,16 @@ def test_regval_reduces_correl():
     #    #set regularization term to between lmin and alpha
     #    model[1]["regval"] = (lmin+alpha)/2.0
     #    #train L1 regularized model
-    #    __, costl = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    #    __, costl = gradientdecent(model, train, target, "mse",
+    #                               validata=vtrain, valitargets=vtarget)
     #    #RIGHT HAND SIDE
     #    #re-init model
     #    model = reinit_ffn(model)
     #    #set regularization term to between lmax and alpha
     #    model[1]["regval"] = (lmax+alpha)/2.0
     #    #train L1 regularized model
-    #    __, costr = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    #    __, costr = gradientdecent(model, train, target, "mse",
+    #                               validata=vtrain, valitargets=vtarget)
     #    #set new boundaries
     #    if costl < costr:
     #        lmax = alpha #set right hand boundary to alpha
@@ -194,37 +178,38 @@ def test_regval_reduces_correl():
     model[1]["regval"] = 0.76171875#(lmin+lmax)/2.0
     #model[1]["regval"] = (lmin+lmax)/2.0
     #train L1 regularized model
-    __, cost2 = gradientdecent(model, train, target, "mse", validata = vtrain, valitargets = vtarget)
+    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights and regval
-    alpha2 = model[1]["regval"]
+    #alpha2 = model[1]["regval"]
     weight2 = model[1]["weight"]
 
-    print("weights -------")
-    print(weight0)
-    print(weight1)
-    print(weight2)
-    print("cost -------")
-    print(cost0)
-    print(cost1)
-    print(cost2)
-    print("reval -------")
-    print(alpha1)
-    print(alpha2)
+    #print("weights -------")
+    #print(weight0)
+    #print(weight1)
+    #print(weight2)
+    #print("cost -------")
+    #print(cost0)
+    #print(cost1)
+    #print(cost2)
+    #print("reval -------")
+    #print(alpha1)
+    #print(alpha2)
 
-    assert abs(weight0[0,2]) > abs(weight1[0,2])
-    assert abs(weight0[0,2]) > abs(weight2[0,2])
-    assert abs(weight2[0,2]) != abs(weight1[0,2])
+    assert abs(weight0[0, 2]) > abs(weight1[0, 2])
+    assert abs(weight0[0, 2]) > abs(weight2[0, 2])
+    assert abs(weight2[0, 2]) != abs(weight1[0, 2])
 
 '''
 def test_calc_regval_dist():
-    """ test that regval + sigma is yeilds a more parsimonious model. Example function is
-    y = x1 - x2 + x3^2, where features x1, x2, and x3 are normaly distributed
-    with zero mean and unit variance and features x1 and x2 are correlated with
-    value 0.5 while x3 is uncorrelated with both x1 and x2."""
+    """ test that regval + sigma is yeilds a more parsimonious model.
+    Example function is y = x1 - x2 + x3^2, where features x1, x2, and x3 are
+    normaly distributed with zero mean and unit variance and features x1 and x2
+    are correlated with value 0.5 while x3 is uncorrelated with both x1 and x2.
+    """
 
     import numpy as np
-    from crpm.setup_multicorrel import setup_multicorrel_C
+    from crpm.setup_multicorrel import setup_multicorrel_c
     from crpm.ffn_bodyplan import reinit_ffn
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
@@ -234,7 +219,7 @@ def test_calc_regval_dist():
     np.random.seed(40017)
 
     #setup model
-    model, data = setup_multicorrel_C()
+    model, data = setup_multicorrel_c()
     #switch to L1 regularization
     model[1]["lreg"] = 1
     #define regval grid
@@ -279,7 +264,8 @@ def test_calc_regval_dist():
             train = train_data[:, invalid != k]
             valid = train_data[:, invalid == k]
             #train model
-            __, cost = gradientdecent(model,train,target_data[invalid != k],"mse",valid,target_data[invalid == k])
+            __, cost = gradientdecent(model,train,target_data[invalid != k],
+                                      "mse",valid,target_data[invalid == k])
             #save cost if well behaved
             if not (np.isnan(cost) or np.isinf(cost) or cost > 1E5):
                 qinst.append(cost)
@@ -304,28 +290,24 @@ def test_deep_model():
     value 0.5 while x3 is uncorrelated with both x1 and x2."""
 
     import numpy as np
-    from crpm.setup_multicorrel import setup_multicorrel_deep_C
-    from crpm.setup_multicorrel import setup_multicorrel_C
-    from crpm.ffn_bodyplan import reinit_ffn
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
+    from crpm.setup_multicorrel import setup_multicorrel_deep_c
+    from crpm.setup_multicorrel import setup_multicorrel_c
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
     np.random.seed(40017)
 
     #setup shallow model
-    model, data = setup_multicorrel_C()
+    model, data = setup_multicorrel_c()
 
     #get data dimensions
-    nvar = data.shape[0]
     nobv = data.shape[1]
 
     # partition training and testing data
-    train = data[0:3,0:nobv//2]
-    target = data[-1,0:nobv//2]
-    vtrain = data[0:3,nobv//2:nobv]
-    vtarget = data[-1,nobv//2:nobv]
+    train = data[0:3, 0:nobv//2]
+    target = data[-1, 0:nobv//2]
+    vtrain = data[0:3, nobv//2:nobv]
+    vtarget = data[-1, nobv//2:nobv]
 
     #train model with mean squared error
     __, cost0 = gradientdecent(model, train, target, "mse", vtrain, vtarget)
@@ -334,7 +316,7 @@ def test_deep_model():
     #weight0 = model[1]["weight"]
 
     #setup deep model
-    model, data = setup_multicorrel_deep_C()
+    model, data = setup_multicorrel_deep_c()
 
     #train model with mean squared error
     __, cost1 = gradientdecent(model, train, target, "mse", vtrain, vtarget)

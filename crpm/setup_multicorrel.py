@@ -20,7 +20,7 @@ def setup_multicorrel():
     return model, data
 
 
-def setup_multicorrel_C():
+def setup_multicorrel_c():
     """ will return model and downloaded data."""
 
     from crpm.ffn_bodyplan import read_bodyplan
@@ -38,7 +38,7 @@ def setup_multicorrel_C():
 
     return model, data
 
-def setup_multicorrel_deep_C():
+def setup_multicorrel_deep_c():
     """ will return deep model and downloaded data."""
 
     from crpm.ffn_bodyplan import read_bodyplan

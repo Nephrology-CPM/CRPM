@@ -18,4 +18,4 @@ def setup_overfitting_shallow():
     __, traindata = load_dataset("crpm/data/overfitting_training.csv")
     keys, validdata = load_dataset("crpm/data/overfitting_validation.csv")
 
-    return model, keys[1:], traindata[1:,:], validdata[1:,:]
+    return model, keys[1:], traindata[1:, :], validdata[1:, :]

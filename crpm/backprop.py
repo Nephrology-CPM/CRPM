@@ -1,30 +1,5 @@
-"""Compute forces on model based on loss function
+"""FNN backpropagation scheme
 """
-
-import numpy as np
-from crpm.activationfunctions import dactivation
-
-def model_has_bad_forces(model, data, targets, lossname):
-    """ Does input data result in model forces that break integrator?"""
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
-
-    #do one fwd-back propagation pass
-    pred, state = fwdprop(data, model)
-    _, dloss = loss(lossname, pred, targets)
-    forces = backprop(model, state, dloss)
-
-    #check for huge forces relative to its respective weight
-    huge = 1E16
-    maxf = []
-    #maxw = []
-    for layer in forces:
-        index = layer["layer"]
-        maxf.append(np.max(np.abs(np.divide(layer["fweight"],model[index]["weight"]))))
-    norm = np.max(maxf)
-
-    #return True if forces are huge
-    return norm > huge
 
 
 def backprop(model, state, dloss):
@@ -50,6 +25,8 @@ def backprop(model, state, dloss):
         Each layer is a dict with keys and shapes "fweight":(n,nprev), and
         "fbias" (n, 1).
     """
+    import numpy as np
+    from crpm.activationfunctions import dactivation
 
     #init forces
     forces = []

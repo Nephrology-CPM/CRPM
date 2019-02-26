@@ -5,15 +5,12 @@ import numpy as np
 def loss(name, pred, target):
     """returns result of loss function given name and predictions and targets
     """
-    if name == "bce": return bce(pred, target)
-    elif name == "mse": return mse(pred, target)
-    else: return mse(pred, target)
-
-    #return {
-    #    "bce":bce(pred, target),
-    #    "mse":mse(pred, target)
-    #}.get(name, mse(pred, target))
-
+    if name == "bce":
+        return bce(pred, target)
+    if name == "mse":
+        return mse(pred, target)
+    #default return function
+    return mse(pred, target)
 #----------------------------------------------------
 
 def bce(pred, target):

@@ -1,53 +1,35 @@
 """ Neural network activation functions and their derivatives
 """
-import numpy as np
 import sys
+import numpy as np
 
 def activation(name, stimulus):
     """returns result of activation function given name and input
     """
-    if name == "vacuum": return vacuum(stimulus)
-    elif name == "linear": return linear(stimulus)
-    elif name == "logistic": return logistic(stimulus)
-    elif name == "relu": return relu(stimulus)
-    elif name == "bentiden": return bentiden(stimulus)
-    elif name == "gaussian": return gaussian(stimulus)
-    elif name == "softmax": return softmax(stimulus)
-    else: return vacuum(stimulus)
-
-    #return {
-    #    "vacuum":vacuum(stimulus),
-    #    "linear":linear(stimulus),
-    #    "logistic":logistic(stimulus),
-    #    "relu":relu(stimulus),
-    #    "bentiden":bentiden(stimulus),
-    #    "gaussian":gaussian(stimulus),
-    #    "softmax":softmax(stimulus)
-    #}.get(name, vacuum(stimulus))
+    if name == "linear":
+        return linear(stimulus)
+    if name == "logistic":
+        return logistic(stimulus)
+    if name == "relu":
+        return relu(stimulus)
+    if name == "softmax":
+        return softmax(stimulus)
+    return vacuum(stimulus)
 
 def dactivation(name, stimulus):
     """returns result of named activation function derivative with respect to
     stimulus
     """
 
-    if name == "vacuum": return vacuum(stimulus)
-    elif name == "linear": return dlinear(stimulus)
-    elif name == "logistic": return dlogistic(stimulus)
-    elif name == "relu":return drelu(stimulus)
-    elif name == "bentiden": return dbentiden(stimulus)
-    elif name == "gaussian": return dgaussian(stimulus)
-    elif name == "softmax": return dsoftmax(stimulus)
-    else: return vacuum(stimulus)
-
-    #return {
-    #    "vacuum":vacuum(stimulus),
-    #    "linear":dlinear(stimulus),
-    #    "logistic":dlogistic(stimulus),
-    #    "relu":drelu(stimulus),
-    #    "bentiden":dbentiden(stimulus),
-    #    "gaussian":dgaussian(stimulus),
-    #    "softmax":dsoftmax(stimulus)
-    #}.get(name, vacuum(stimulus))
+    if name == "linear":
+        return dlinear(stimulus)
+    if name == "logistic":
+        return dlogistic(stimulus)
+    if name == "relu":
+        return drelu(stimulus)
+    if name == "softmax":
+        return dsoftmax(stimulus)
+    return vacuum(stimulus)
 
 #----------------------------------------------------
 
@@ -73,11 +55,11 @@ def dlinear(stimulus):
 def logistic(stimulus):
     """definition of logistic function
     """
-    y =1/(1 + np.exp(-stimulus))
-    y[y>=1] = 1 - sys.float_info.epsilon
-    y[y<=0] = sys.float_info.epsilon
+    logit = 1/(1 + np.exp(-stimulus))
+    logit[logit >= 1] = 1 - sys.float_info.epsilon
+    logit[logit <= 0] = sys.float_info.epsilon
 
-    return y
+    return logit
 
 def dlogistic(stimulus):
     """definition of deriv of logistic function with respect to stimulus
