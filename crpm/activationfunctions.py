@@ -14,6 +14,10 @@ def activation(name, stimulus):
         return relu(stimulus)
     if name == "softmax":
         return softmax(stimulus)
+    if name == "gaussian":
+        return gaussian(stimulus)
+    if name == "hat":
+        return hat(stimulus)
     return vacuum(stimulus)
 
 def dactivation(name, stimulus):
@@ -114,6 +118,14 @@ def dgaussian(stimulus):
     """
     gauss = gaussian(stimulus)
     return np.multiply(-2.0, np.multiply(stimulus, gauss))
+
+#----------------------------------------------------
+
+def hat(stimulus):
+    """definition of hat function
+    """
+    return np.multiply(np.subtract(1,np.multiply(stimulus,stimulus)),
+                       gaussian(stimulus))
 
 #----------------------------------------------------
 

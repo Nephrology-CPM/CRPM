@@ -79,6 +79,36 @@ def init_ffn(bodyplan):
 
     return model
 
+def get_bodyplan(model):
+    """get bodyplan for arbitrary feed forward network model.
+
+    Args:
+        An ffn model
+    Returns:
+        bodyplan: A list of L layers representing the model architecture with layers
+            represented as dictionaries with keys "layer", "n", "activation",
+            and "regval". These keys contain the layer index,
+            integer number of units in that layer, the name of the
+            activation function employed, and the L2 regularization parameter employed respectively.
+    """
+    import numpy as np
+
+    #init bodyplan as empty list
+    bodyplan = []
+
+    for mlayer in model:
+        layer = {}
+        layer["layer"] = mlayer["layer"]
+        layer["n"] = mlayer["n"]
+        layer["activation"] = mlayer["activation"]
+        if "regval" in mlayer:
+            layer["regval"] = mlayer["regval"]
+        if "lreg" in mlayer:
+            layer["lreg"] = mlayer["lreg"]
+        bodyplan.append(layer)
+
+    return bodyplan
+
 def reinit_ffn(model):
     """Reinitialize feed forward network model.
 
