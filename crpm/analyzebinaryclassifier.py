@@ -18,8 +18,9 @@ def analyzebinaryclassifier(pred, targets):
             "FalseDiscRate":float, "FalseOmitRate":float,
             "PosLikelihoodRatio":float, "NegLikelihoodRatio":float,
             "DiagnosticOddsRatio":float, "F1Score":float,
+            "NPred":float,"MatthewsCorrCoef":float,
             "OptimalThreshold":float, "AreaUnderCurve":float.
-            The optimal threshold is the threashold that maximizes the accuracy.
+            The optimal threshold is the threashold that maximizes MatthewsCorrCoef.
     """
     import numpy as np
 
@@ -28,6 +29,7 @@ def analyzebinaryclassifier(pred, targets):
     #constant data parameters
     sumpos = np.sum(targets == 1)
     sumneg = np.sum(targets == 0)
+    ntargets = sumpos+sumneg
 
     #init ROC
     roc = []
@@ -48,6 +50,7 @@ def analyzebinaryclassifier(pred, targets):
         "lrneg":np.nan,
         "dor":np.nan,
         "f1score":np.nan,
+        "mcc":np.nan
         }
 
     #check for valid pred data
@@ -60,8 +63,8 @@ def analyzebinaryclassifier(pred, targets):
         condpos = (targets[idx] == 1)
         condneg = (targets[idx] == 0)
 
-        #init max f1score
-        max_f1 = 0
+        #init max heuristic
+        max_heuristic = 0
 
         for i in idx:
 
@@ -73,6 +76,8 @@ def analyzebinaryclassifier(pred, targets):
 
             truepos = np.sum(predpos & condpos)
             falsepos = np.sum(predpos & condneg)
+            trueneg = np.sum(~predpos & condneg)
+            falseneg = np.sum(~predpos & condpos)
 
             #calculate false positive rate
             var["fpr"] = falsepos/sumneg
@@ -81,20 +86,25 @@ def analyzebinaryclassifier(pred, targets):
             var["tpr"] = truepos/sumpos
 
             #calculate positive predicitve value
-            var["ppv"] = truepos/(truepos + falsepos)
+            #var["ppv"] = truepos/(truepos + falsepos)
 
-            #calculate f1score
-            var["f1score"] = 2/(1/var["tpr"]+1/var["ppv"])
+            #calculate heuristic
+            S = (truepos+falseneg)/ntargets
+            P = (truepos+falsepos)/ntargets
+            denom = np.sqrt(P*S*(1-S)*(1-P))
+            heuristic = 0
+            if denom != 0:
+                heuristic = (truepos/ntargets - S * P)/denom
 
-            #record best F1score
-            if var["f1score"] >= max_f1:
-                max_f1 = np.copy(var["f1score"])
+            #record best heuristic
+            if heuristic >= max_heuristic:
+                max_heuristic = np.copy(heuristic)
                 var["alpha"] = np.copy(threshold)
 
             #push to ROC
             roc.append([var["fpr"], var["tpr"]])
 
-        # get stats at threashold that optimizes f1score
+        # get stats at threashold that optimizes heuristic
         predpos = (pred[0, idx] >= var["alpha"]) #positive predictions
 
         truepos = np.sum(predpos & condpos)
@@ -127,6 +137,8 @@ def analyzebinaryclassifier(pred, targets):
         var["lrneg"] = var["fnr"]/var["tnr"]
         var["dor"] = var["lrpos"]/var["lrneg"]
         var["f1score"] = 2/(1/var["tpr"]+1/var["ppv"])
+        var["mcc"] = (np.sqrt(var["ppv"]*var["tpr"]*var["tnr"]*var["npv"])-
+                      np.sqrt(var["fdr"]*var["fnr"]*var["fpr"]*var["fomr"]))
 
     report = {"AreaUnderCurve":trapintegration(roc),
               "OptimalThreshold":var["alpha"],
@@ -138,9 +150,9 @@ def analyzebinaryclassifier(pred, targets):
               "PosLikelihoodRatio":var["lrpos"], "NegLikelihoodRatio":var["lrneg"],
               "DiagnosticOddsRatio":var["dor"], "F1Score":var["f1score"],
               "NPred":np.sum(predpos),
+              "MatthewsCorrCoef":var["mcc"]
              }
 
-    #print(report)
     return roc, report
 
 
