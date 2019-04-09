@@ -241,9 +241,9 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3 
             continuelearning = False
 
     #return predictions
-    return som_classify(state, map), map
+    return som_classify(map, state), map
 
-def som_classify(state, map):
+def som_classify(map, state):
     """ classify each observation using SOM """
     import numpy as np
 
