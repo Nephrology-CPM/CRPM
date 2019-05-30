@@ -6,5 +6,6 @@ crpm/__pycache__
 build/
 crpm.egg-info/
 dist/
+temp/
 ~*
 *.html

@@ -159,6 +159,18 @@ def analyzebinaryclassifier(pred, targets):
 def plotroc(roc):
     """ utility for visulaizing roc returned by analyzebinaryclassifier
     """
+    import matplotlib
+    matplotlib.use('TkAgg')
     import matplotlib.pyplot as plt
+    import numpy as np
+
+    def abline(slope, intercept):
+        """Plot a line from slope and intercept"""
+        axes = plt.gca()
+        x_vals = np.array(axes.get_xlim())
+        y_vals = intercept + slope * x_vals
+        plt.plot(x_vals, y_vals, '--')
+
     plt.scatter(*zip(*roc))
+    abline(1,0)
     plt.show()
