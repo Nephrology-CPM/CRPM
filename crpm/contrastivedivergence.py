@@ -1,7 +1,7 @@
 """ NN training by contrastive divergence
 """
 
-def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=5, momentum=.5):
+def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, batchsize=10, validata=None):
     """unfold and train fnn model by contrastive divergence
 
         Args:
@@ -45,13 +45,31 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=5, momentum=.5):
     if maxepoch<1:
         return exitcond, smodel
 
+    #define minibatches
+    #get number of observations in data
+    nobv = data.shape[1]
+    #calculate number of minibatches needed
+    batchsize = int(batchsize)
+    nbatch = nobv//batchsize
+    #get randomized observation index
+    data = data.T
+    np.random.shuffle(data)
+    data = data.T
+
     #konstant: scales learning rate by max force relative to weight
     alpha_norm = 5E-6
 
     #initialize previous layer activity with input data for layer 0
     prevlayeractivity = data
-    #set number of observations in data
-    nobv = data.shape[1]
+
+    #do the same for the validation data
+    validprevlayeractivity=validata
+    if validata == None:
+        #use last 20% of batches for validation
+        vbatch = nbatch//5
+        nbatch = nbatch - vbatch
+        prevlayeractivity = data[:,0:nbatch*batchsize]
+        validprevlayeractivity = data[:,nbatch*batchsize:]
 
     # loop over first half of symmetric model begining with layer 1
     for layerindex in range(1,nlayer):
@@ -117,7 +135,13 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=5, momentum=.5):
             print("Error in contrastivedivergence.py: cannot find appropriate RBM type.")
             print("Ensure model has only logistic or linear layers.")
             print("Also ensure linear layers are not adjacent - that would be pointless btw.")
-            return exitcond
+            return exitcond, smodel
+
+        #define free energy equation
+        def feng(act):
+            stimulus = np.add(hidlayer["weight"].dot(act),hidlayer["bias"])
+            eng = -np.sum(np.multiply(act,vislayer["bias"]))
+            return eng - np.sum(np.log(1+np.exp(stimulus)))
 
         # continuous loop over learning steps (use exit conditions)
         print("training "+rbmtype+" RBM in layer "+str(layerindex))
@@ -127,87 +151,115 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=5, momentum=.5):
         dweight = np.zeros(hidlayer["weight"].shape)
         dhbias = np.zeros(hidlayer["bias"].shape)
         dvbias = np.zeros(vislayer["bias"].shape)
+        freeeng = np.full(nadj,feng(validprevlayeractivity)
+                          -feng(prevlayeractivity))
+        freeeng0 = np.copy(freeeng)
+        earlystop = False
         while continuelearning:
-
-            # get visible layer activity
-            vact = prevlayeractivity
-
-            # get hidden layer activity and poshidstates
-            hact, hstate = hsample()
-
-            # get product of visible layer and hidden layer actvities
-            pprod = hact.dot(vact.T)
-
-            # get sum of visible layer activity
-            pvsum = np.sum(vact, axis=1, keepdims=True)
-
-            # get sum of hidden layer activity
-            phsum = np.sum(hact, axis=1, keepdims=True)
-
-            # loop over N Gibbs sampling iterations (at least one iteration)
-            continuegibbs = True
-            gibbs = 0
-            while continuegibbs:
-                #increment gibbs counter
-                gibbs += 1
-                # get visible layer activity | hidden layer states
-                vact = vsample()
-                # sample hidden layer state | visible layer activity
-                hact, hstate = hsample()
-                #exit condition
-                if gibbs>=N:
-                    continuegibbs = False
-            # get product of visible layer and hidden layer actvities
-            nprod = hact.dot(vact.T)
-            # get sum of visible layer activity
-            nvsum = np.sum(vact, axis=1, keepdims=True)
-            # get sum of hidden layer activity
-            nhsum = np.sum(hact, axis=1, keepdims=True)
-
-            # accumulate error
-            err += np.sum(np.square(prevlayeractivity-vact))
-
-            # get forces on visible layer biases
-            dvbias0 = dvbias
-            dvbias = (pvsum-nvsum)/nobv
-
-            # get forces on the hidden layer biases
-            dhbias0 = dhbias
-            dhbias = (phsum-nhsum)/nobv
-
-            #calculate forces on weights
-            dweight0 = dweight
-            dweight = (pprod-nprod)/nobv
-            #add regularization penalty term if specified by layer
-            if hidlayer["regval"] > 0:
-                if hidlayer["lreg"] == 1:
-                    dweight -= hidlayer["regval"]*np.sign(hidlayer["weight"])
-                if hidlayer["lreg"] == 2:
-                    dweight -= hidlayer["regval"]*hidlayer["weight"]
-
-            # adjust learning rates periodically based on current forces on weights
-            if epoch%nadj == 0:
-                alpha = alpha_norm*np.max(np.divide(hidlayer["weight"],dweight))
-
-            #update weights with momentum term
-            hidlayer["weight"]+=momentum*dweight0+alpha*dweight
-
-            # update visible layer biases with momentum term
-            vislayer["bias"]+=momentum*dvbias0+alpha*dvbias
-
-            # update hidden layer biases with momentum term
-            hidlayer["bias"]+=momentum*dhbias0+alpha*dhbias
-
             #increment epoch counter
             epoch += 1
             #print("epoch = "+str(epoch))
 
+            #loop over minibatches
+            for batch in range(nbatch):
+
+                #get minibatch
+                minibatch = prevlayeractivity[:,batch*batchsize:(batch+1)*batchsize]
+
+                # get visible layer activity
+                vact = minibatch
+
+                # get hidden layer activity and poshidstates
+                hact, hstate = hsample()
+
+                # get product of visible layer and hidden layer actvities
+                pprod = hact.dot(vact.T)
+
+                # get sum of visible layer activity
+                pvsum = np.sum(vact, axis=1, keepdims=True)
+
+                # get sum of hidden layer activity
+                phsum = np.sum(hact, axis=1, keepdims=True)
+
+                # loop over N Gibbs sampling iterations (at least one iteration)
+                continuegibbs = True
+                gibbs = 0
+                while continuegibbs:
+                    #increment gibbs counter
+                    gibbs += 1
+                    # get visible layer activity | hidden layer states
+                    vact = vsample()
+                    # sample hidden layer state | visible layer activity
+                    hact, _ = hsample()
+                    # use hidden layer activity instead of state for subsequent
+                    # iterations so we overwrite hstate with the activity
+                    hstate = np.copy(hact)
+                    #exit condition
+                    if gibbs>=N:
+                        continuegibbs = False
+                # get product of visible layer and hidden layer actvities
+                nprod = hact.dot(vact.T)
+                # get sum of visible layer activity
+                nvsum = np.sum(vact, axis=1, keepdims=True)
+                # get sum of hidden layer activity
+                nhsum = np.sum(hact, axis=1, keepdims=True)
+
+                # accumulate error
+                err += np.sum(np.square(minibatch-vact))
+
+                # get forces on visible layer biases
+                dvbias0 = dvbias
+                dvbias = (pvsum-nvsum)/batchsize
+
+                # get forces on the hidden layer biases
+                dhbias0 = dhbias
+                dhbias = (phsum-nhsum)/batchsize
+
+                #calculate forces on weights
+                dweight0 = dweight
+                dweight = (pprod-nprod)/batchsize
+                #add regularization penalty term if specified by layer
+                if hidlayer["regval"] > 0:
+                    if hidlayer["lreg"] == 1:
+                        dweight -= hidlayer["regval"]*np.sign(hidlayer["weight"])
+                    if hidlayer["lreg"] == 2:
+                        dweight -= hidlayer["regval"]*hidlayer["weight"]
+
+                #adjust learning rate to ensure integrator doesn't break
+                alpha = alpha_norm*np.max(np.divide(hidlayer["weight"],dweight))
+                #print(alpha)
+
+                #update weights with momentum term
+                hidlayer["weight"]+=momentum*dweight0+alpha*dweight
+
+                # update visible layer biases with momentum term
+                vislayer["bias"]+=momentum*dvbias0+alpha*dvbias
+
+                # update hidden layer biases with momentum term
+                hidlayer["bias"]+=momentum*dhbias0+alpha*dhbias
+
+            # periodically check free energy for overfitting
+            freeeng[epoch%nadj]=feng(validprevlayeractivity)-feng(prevlayeractivity)
+            #print(np.mean(freeeng))
+            if epoch%nadj == 0:
+                if np.mean(freeeng) > np.mean(freeeng0)+0*np.std(freeeng0):
+                    #initiate naive earlystopping
+                    earlystop= True
+                    print("Free engergy prev = " +str(np.mean(freeeng0)))
+                    print("Free engergy curr = " +str(np.mean(freeeng)))
+                freeeng0 = np.copy(freeeng)
+
             # - EXIT CONDITIONS -
             #exit if learning is taking too long
-            if epoch >= int(maxepoch):
+            if epoch > int(maxepoch):
                 print("Warning contrastivedivergence.py: Training is taking a long time!"+
                     " - Try increaseing maxepoch - Training will end")
                 exitcond = 1
+                continuelearning = False
+            #exit if naive earlystopping has been engauged
+            if earlystop:
+                print("Warning contrastivedivergence.py: early stopping after "
+                      +str(epoch)+" epochs")
                 continuelearning = False
 
         #symmeterize weights
@@ -217,9 +269,12 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=5, momentum=.5):
         model[layerindex]=hidlayer
 
         #promote prevlayeractivity to current hidlayer activity
-        vact = prevlayeractivity
-        hact, _ = hsample()
-        prevlayeractivity=hact
+        vact = np.copy(prevlayeractivity)
+        prevlayeractivity, _ = hsample()
+
+        #promote validation data to current hidden layer too
+        vact = np.copy(validprevlayeractivity)
+        validprevlayeractivity, _ = hsample()
 
     # return exit condition
     return exitcond, smodel

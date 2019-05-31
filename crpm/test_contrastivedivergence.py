@@ -207,24 +207,24 @@ def test_pretrain_periodiccases():
     #calculate intermediate binary cross entropy error
     pred, _ = fwdprop(valid, model)
     mcost, _ = loss("bce", pred, validtargets)
-    roc, report = analyzebinaryclassifier(pred, validtargets)
-    if report["AreaUnderCurve"]<.5:
+    roc, mreport = analyzebinaryclassifier(pred, validtargets)
+    if mreport["AreaUnderCurve"]<.5:
         pred = 1-pred
         mcost, _ = loss("bce", pred, validtargets)
-        roc, report = analyzebinaryclassifier(pred, validtargets)
-    print(report)
+        roc, mreport = analyzebinaryclassifier(pred, validtargets)
+    print(mreport)
     #plotroc(roc)
 
     #fine-tune model
     pred, fcost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
 
     #calculate final out-sample analysis
-    roc, report = analyzebinaryclassifier(pred, validtargets)
+    roc, freport = analyzebinaryclassifier(pred, validtargets)
     if report["AreaUnderCurve"]<.5:
         pred = 1-pred
         fcost, _ = loss("bce", pred, validtargets)
-        roc, report = analyzebinaryclassifier(pred, validtargets)
-    print(report)
+        roc, freport = analyzebinaryclassifier(pred, validtargets)
+    print(freport)
     #plotroc(roc)
 
     print("initial cost")
@@ -242,7 +242,12 @@ def test_pretrain_periodiccases():
     print(cost_encoder)
 
     #assert learning is taking place
-    assert cost > fcost
+    assert icost > fcost
+
+    #assert contrastivedivergence or fine tuning helps
+    CDhelps = report["AreaUnderCurve"] > mreport["AreaUnderCurve"]
+    finetunehelps = report["AreaUnderCurve"] > freport["AreaUnderCurve"]
+    assert CDhelps or finetunehelps
 
 def test_pretrain_periodiccases_deep():
     """test pretained periodiccases model encodes better than non pretrained model
@@ -350,5 +355,49 @@ def test_pretrain_periodiccases_deep():
     print("pre-training reconstruction error")
     print(cost_encoder)
 
-    #assert learning is taking place
+    #assert fine tuning after pretraining is better than without pre-training
     assert cost > fcost
+
+def test_stability_periodiccases_deep():
+    """test stability of periodiccases deep model by contrastivedivergence
+    """
+    import numpy as np
+    from crpm.setup_periodiccases import setup_periodiccases_deep
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
+    from crpm.contrastivedivergence import contrastivedivergence
+
+    #init numpy seed
+    np.random.seed(40017)
+
+    #setup model
+    model, data = setup_periodiccases_deep()
+    nx = data.shape[0]
+    nsample = data.shape[1]
+
+    #partition training and validation data
+    valid = data[1:nx,0:nsample//3]
+    validtargets = data[0,0:nsample//3]
+    train = data[1:nx,nsample//3:nsample]
+    targets =data[0,nsample//3:nsample]
+
+    #return untrained autoencoder
+    _, autoencoder = contrastivedivergence(model, train, maxepoch=0)
+
+    #calculate initial reconstruction error
+    pred, _ = fwdprop(train, autoencoder)
+    icost, _ = loss("mse", pred, train)
+
+    #train model
+    _, autoencoder = contrastivedivergence(model, train, N=1, maxepoch=200, momentum=0.0)
+
+    #calculate final reconstruction error
+    pred, _ = fwdprop(train, autoencoder)
+    cost, _ = loss("mse", pred, train)
+
+    #print(autoencoder)
+    print(icost)
+    print(cost)
+
+    #assert learning is taking place
+    assert icost > cost
