@@ -27,7 +27,8 @@ def langevindynamics(model, data, targets, lossname, validata=None,
 
     #convergence test constants
     alpha_norm = 5E-5 #scales learning rate by max force relative to weight
-    nbuffer = 500
+    #nbuffer = 500
+    nbuffer = 0
     #maxslope = -1E-6 #max learning slope should be negative but close to zero
 
     #buffer time grid
