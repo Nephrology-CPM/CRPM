@@ -4,6 +4,7 @@ setup(
     name='crpm',
     version='0.1',
     packages=find_packages(exclude=['tests*']),
+    install_requires=['numpy'],
     include_package_data=True,
     package_data={
         '': ['*.csv'],
