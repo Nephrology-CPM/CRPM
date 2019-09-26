@@ -8,3 +8,4 @@ crpm.egg-info/
 dist/
 ~*
 *.html
+temp
