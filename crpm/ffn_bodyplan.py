@@ -39,7 +39,7 @@ def read_bodyplan(file):
             bodyplan.append(layer)
     return bodyplan
 
-def init_ffn(bodyplan):
+def init_ffn(bodyplan, weightstd=None):
     """Setup for arbitrary feed forward network model.
 
     Args:
@@ -56,8 +56,11 @@ def init_ffn(bodyplan):
     """
     import numpy as np
 
+    #get random initial weight std
+    if weightstd is None:
+        weightstd = init_weight_std
     #print todo # WARNING:
-    print("WARNING need to initialize weights with small std ~.01")
+    #print("WARNING need to initialize weights with small std ~.01")
 
     #init model as list holding data for each layer start with input layer
     model = []
@@ -77,7 +80,7 @@ def init_ffn(bodyplan):
             "activation": bodyplan[layer]["activation"],
             "lreg":bodyplan[layer]["lreg"],
             "regval":bodyplan[layer]["regval"],
-            "weight": np.random.randn(ncurr, nprev)*init_weight_std, #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*weightstd, #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
@@ -184,7 +187,7 @@ def push_bodyplanlayer(bodyplan,layer):
 
     return
 
-def reinit_ffn(model):
+def reinit_ffn(model, weightstd=None):
     """Reinitialize feed forward network model.
 
     Args:
@@ -193,6 +196,10 @@ def reinit_ffn(model):
         The input model with reinitialized weights and biases
     """
     import numpy as np
+
+    #get random initial weight std
+    if weightstd is None:
+        weightstd = init_weight_std
 
     #init model as list holding data for each layer start with input layer
     newmodel = []
@@ -212,7 +219,7 @@ def reinit_ffn(model):
             "activation": model[layer]["activation"],
             "lreg":model[layer]["lreg"],
             "regval":model[layer]["regval"],
-            "weight": np.random.randn(ncurr, nprev)*init_weight_std, #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*weightstd, #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
