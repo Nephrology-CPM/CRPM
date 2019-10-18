@@ -20,8 +20,8 @@ def test_solve_numberadder():
     model[1]["weight"] = 1.1*np.ones(model[1]["weight"].shape)
 
     #train numberadder model  with mean squared error
-    __, data = load_dataset("crpm/data/numberadder.csv")
-    __, __ = gradientdecent(model, data[0:5,], data[-1,], "mse")
+    _, data = load_dataset("crpm/data/numberadder.csv")
+    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse")
 
     print(model[1]["weight"])
 
@@ -44,12 +44,12 @@ def test_solve_nestedcs():
     model, data = setup_nestedcs()
 
     #calculate initial mean squared error
-    pred, __ = fwdprop(data[0:2,], model)
-    icost, __ = loss("mse", pred, data[-1,])
+    pred, _ = fwdprop(data[0:2,], model)
+    icost, _ = loss("mse", pred, data[-1,])
     #print(icost)
 
     #train model
-    pred, cost = gradientdecent(model, data[0:2,], data[-1,], "mse")
+    pred, cost, _ = gradientdecent(model, data[0:2,], data[-1,], "mse")
 
     #print(model)
     #print(icost)
@@ -73,14 +73,90 @@ def test_solve_nestedcs_bce():
     model, data = setup_nestedcs()
 
     #calculate initial binary cross entropy error
-    pred, __ = fwdprop(data[0:2,], model)
-    icost, __ = loss("bce", pred, data[-1,])
+    pred, _ = fwdprop(data[0:2,], model)
+    icost, _ = loss("bce", pred, data[-1,])
 
     #train model
-    pred, cost = gradientdecent(model, data[0:2,], data[-1,], "bce")
+    pred, cost, _ = gradientdecent(model, data[0:2,], data[-1,], "bce")
 
     #print(model)
     #print(icost)
     #print(cost)
     assert icost > cost
     assert cost < .29
+
+def test_solve_periodiccases_bce():
+    """test periodiccases can be solved
+    """
+    import numpy as np
+    from crpm.setup_periodiccases import setup_periodiccases
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
+    from crpm.gradientdecent import gradientdecent
+
+    #init numpy seed
+    np.random.seed(40017)
+
+    #setup model
+    model, data = setup_periodiccases()
+    nx = data.shape[0]
+    nsample = data.shape[1]
+
+    #partition training and validation data
+    valid = data[1:data.shape[0],0:nsample//3]
+    validtargets = data[0,0:nsample//3]
+    train = data[1:data.shape[0],nsample//3:nsample]
+    targets =data[0,nsample//3:nsample]
+
+    #calculate initial binary cross entropy error
+    pred, _ = fwdprop(train, model)
+    icost, _ = loss("bce", pred, targets)
+
+    #train model
+    pred, cost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
+
+    print(model)
+    print(icost)
+    print(cost)
+    assert icost > cost
+    assert cost < .71
+
+def test_solve_periodiccases_deep_bce():
+    """test periodiccases_deep can be solved
+    """
+    import numpy as np
+    from crpm.setup_periodiccases import setup_periodiccases_deep
+    from crpm.fwdprop import fwdprop
+    from crpm.lossfunctions import loss
+    from crpm.gradientdecent import gradientdecent
+
+    #init numpy seed
+    np.random.seed(40017)
+
+    #setup model
+    model, data = setup_periodiccases_deep()
+    nx = data.shape[0]
+    nsample = data.shape[1]
+
+    #partition training and validation data
+    valid = data[1:data.shape[0],0:nsample//3]
+    validtargets = data[0,0:nsample//3]
+    train = data[1:data.shape[0],nsample//3:nsample]
+    targets =data[0,nsample//3:nsample]
+
+    #calculate initial binary cross entropy error
+    pred, _ = fwdprop(train, model)
+    icost, _ = loss("bce", pred, targets)
+
+    #train model
+    pred, cost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
+
+    print(model)
+    print(icost)
+    print(cost)
+
+    #assert learning has taken place
+    assert icost > cost
+
+    #assert cost is less than 1.7
+    assert cost < 1.7

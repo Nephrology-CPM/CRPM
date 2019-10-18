@@ -26,7 +26,7 @@ def test_regval_reduces_uncorrel():
     vtarget = data[-1, nobv//2:nobv]
 
     #train model with mean squared error
-    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight0 = model[1]["weight"]
@@ -39,7 +39,7 @@ def test_regval_reduces_uncorrel():
     model[1]["regval"] = 100#75
 
     #train L1 regularized model
-    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight1 = model[1]["weight"]
@@ -52,7 +52,7 @@ def test_regval_reduces_uncorrel():
     model[1]["regval"] = 4
 
     #train L2 regularized model
-    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight2 = model[1]["weight"]
@@ -89,7 +89,7 @@ def test_regval_reduces_correl():
     vtarget = data[-1, nobv//2:nobv]
 
     #train model with mean squared error
-    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     weight0 = model[1]["weight"]
@@ -133,7 +133,7 @@ def test_regval_reduces_correl():
     model[1]["regval"] = 13.92578125#(lmin+lmax)/2.0
     #model[1]["regval"] = (lmin+lmax)/2.0
     #train L1 regularized model
-    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights and regval
     #alpha1 = model[1]["regval"]
@@ -178,7 +178,7 @@ def test_regval_reduces_correl():
     model[1]["regval"] = 0.76171875#(lmin+lmax)/2.0
     #model[1]["regval"] = (lmin+lmax)/2.0
     #train L1 regularized model
-    _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights and regval
     #alpha2 = model[1]["regval"]
@@ -264,7 +264,7 @@ def test_calc_regval_dist():
             train = train_data[:, invalid != k]
             valid = train_data[:, invalid == k]
             #train model
-            __, cost = gradientdecent(model,train,target_data[invalid != k],
+            _, cost, _ = gradientdecent(model,train,target_data[invalid != k],
                                       "mse",valid,target_data[invalid == k])
             #save cost if well behaved
             if not (np.isnan(cost) or np.isinf(cost) or cost > 1E5):
@@ -310,7 +310,7 @@ def test_deep_model():
     vtarget = data[-1, nobv//2:nobv]
 
     #train model with mean squared error
-    __, cost0 = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, cost0, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     #weight0 = model[1]["weight"]
@@ -319,11 +319,10 @@ def test_deep_model():
     model, data = setup_multicorrel_deep_c()
 
     #train model with mean squared error
-    __, cost1 = gradientdecent(model, train, target, "mse", vtrain, vtarget)
+    _, cost1, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget)
 
     #save weights
     #weight1 = model[1]["weight"]
-
 
     #print(cost0)
     #print(cost1)

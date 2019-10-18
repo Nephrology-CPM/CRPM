@@ -15,10 +15,10 @@ def test_solved_nestedcs():
     model, data = setup_nestedcs()
 
     #train model
-    pred, __ = gradientdecent(model, data[0:2,], data[-1,], "mse")
+    pred, _, _ = gradientdecent(model, data[0:2,], data[-1,], "mse")
 
     #analyze binary classifier
-    __, report = analyzebinaryclassifier(pred, data[-1,])
+    _, report = analyzebinaryclassifier(pred, data[-1,])
 
     assert report["AreaUnderCurve"] >= .92
     assert report["Accuracy"] >= .84
@@ -36,10 +36,10 @@ def will_roc_will_plot():
     model, data = setup_nestedcs()
 
     #train model
-    pred, __ = gradientdecent(model, data[0:2,], data[-1,], "mse")
+    pred, _, _ = gradientdecent(model, data[0:2,], data[-1,], "mse")
 
     #analyze binary classifier
-    roc, __ = analyzebinaryclassifier(pred, data[-1,])
+    roc, _ = analyzebinaryclassifier(pred, data[-1,])
 
     plt.scatter(*zip(*roc))
 
@@ -66,10 +66,10 @@ def test_solved_nestedcs_bce():
     model, data = setup_nestedcs()
 
     #train model
-    pred, __ = gradientdecent(model, data[0:2,], data[-1,], "bce")
+    pred, _, _ = gradientdecent(model, data[0:2,], data[-1,], "bce")
 
     #analyze binary classifier
-    __, report = analyzebinaryclassifier(pred, data[-1,])
+    _, report = analyzebinaryclassifier(pred, data[-1,])
 
     print(report)
     assert report["AreaUnderCurve"] >= .95

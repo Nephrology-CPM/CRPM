@@ -13,7 +13,10 @@ def gradientdecent(model, data, targets, lossname, validata=None,
             validata: data used to calculate out-sample error
             valitargets: targets used to calculate out-sample error
             maxiteration: hard limit of learning iterations default is 10000
-        Returns: final predictions and cost. Training will modify model.
+        Returns: final predictions and cost along with exit condition.
+            Exit conditions are 0) learning converged, 1) learning not
+            converged, 2) learning was stopped early, and -1) learning diverged.
+            Training will modify model.
     """
 
     import numpy as np
@@ -60,8 +63,12 @@ def gradientdecent(model, data, targets, lossname, validata=None,
     # 3) cost diverges - defined true when cost > 1E16
     # or
     # 4) too many iterations - hardcoded to ensure loop exit
-    count = 0
     continuelearning = True
+    #Do not do any learning if maxepoch is not a positive integer
+    if maxepoch<1 :
+        continuelearning = False
+    count = 0
+    exitcond = 0
     while continuelearning:
 
         #clear cost buffer
@@ -98,6 +105,7 @@ def gradientdecent(model, data, targets, lossname, validata=None,
 
         #Record best error and save model
         if cost <= best_cost:
+            #print(cost)
             best_cost = np.copy(cost)
             best_model = copy_ffn(model)
 
@@ -106,23 +114,27 @@ def gradientdecent(model, data, targets, lossname, validata=None,
         if count > int(maxepoch):
             print("Warning gradientdecent.py: Training is taking a long time!"+
                   " - Try increaseing maxepoch - Training will end")
+            exitcond = 1
             continuelearning = False
         #exit if learning has plateaued
         if slope > maxslope:
+            exitcond = 0
             continuelearning = False
         #exit if early stopping and error has risen
         if  earlystop and cost > best_cost:
             print("early stopping")
+            exitcond = 2
             continuelearning = False
         #exit if cost has diverged
         if cost > 1E16:
             print("Warning gradientdecent.py: diverging cost function "+
                   "- try lowering learning rate or inc regularization constant "+
                   "- training will end.")
+            exitcond = -1
             continuelearning = False
 
     #return best model
     model = copy_ffn(best_model)
 
     #return predictions and cost
-    return out_sample_error()
+    return (*out_sample_error(),exitcond)

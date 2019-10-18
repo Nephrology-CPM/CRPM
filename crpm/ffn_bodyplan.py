@@ -1,6 +1,9 @@
 """General feed forward network body plan.
 """
 
+#global parameter
+init_weight_std = 1.0
+
 def read_bodyplan(file):
     """Read body plan from csv file.
 
@@ -49,9 +52,12 @@ def init_ffn(bodyplan):
         A list of layers with parameters to be optimized by the learning algorithm
         represetning the current model state.
         Each layer is a dictionary with keys and shapes "weight":(n,nprev), and
-        "bias" (n, 1) so function returns a list of dicttionaries.
+        "bias" (n, 1) so function returns a list of dictionaries.
     """
     import numpy as np
+
+    #print todo # WARNING:
+    print("WARNING need to initialize weights with small std ~.01")
 
     #init model as list holding data for each layer start with input layer
     model = []
@@ -71,7 +77,7 @@ def init_ffn(bodyplan):
             "activation": bodyplan[layer]["activation"],
             "lreg":bodyplan[layer]["lreg"],
             "regval":bodyplan[layer]["regval"],
-            "weight": np.random.randn(ncurr, nprev), #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*init_weight_std, #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
@@ -103,11 +109,80 @@ def get_bodyplan(model):
         layer["activation"] = mlayer["activation"]
         if "regval" in mlayer:
             layer["regval"] = mlayer["regval"]
+        else:
+            layer["regval"] = float(0) #default regularization parameter
         if "lreg" in mlayer:
             layer["lreg"] = mlayer["lreg"]
+        else:
+            layer["lreg"] = int(1) #default regularization is L1
         bodyplan.append(layer)
 
     return bodyplan
+
+def copy_bodyplan(bodyplan):
+    """get bodyplan for arbitrary feed forward network model.
+
+    Args:
+        An ffn model
+    Returns:
+        bodyplan: A list of L layers representing the model architecture with layers
+            represented as dictionaries with keys "layer", "n", "activation",
+            and "regval". These keys contain the layer index,
+            integer number of units in that layer, the name of the
+            activation function employed, and the L2 regularization parameter employed respectively.
+    """
+    import numpy as np
+    import copy
+
+    #init bodyplan as empty list
+    newbodyplan = []
+
+    for mlayer in bodyplan:
+        layer = {}
+        layer["layer"] = copy.copy(mlayer["layer"])
+        layer["n"] = copy.copy(mlayer["n"])
+        layer["activation"] = copy.copy(mlayer["activation"])
+        layer["regval"] = copy.copy(mlayer["regval"])
+        layer["lreg"] = copy.copy(mlayer["lreg"])
+        newbodyplan.append(layer)
+
+    return newbodyplan
+
+def push_bodyplanlayer(bodyplan,layer):
+    """stack a layer onto exiswiting bodyplan for arbitrary feed forward network model.
+
+    Args:
+        bodyplan: An ffn bodyplan with L layers
+        layer: a bodyplan layer to push
+    Returns:
+        None : will modify bodyplan inplace as a list of L+1 layers representing the model architecture with layers
+            represented as dictionaries with keys "layer", "n", "activation",
+            and "lreg", "regval". These keys contain the layer index,
+            integer number of units in that layer, the name of the
+            activation function employed, the L integer of Lnorm regularization
+            employed, and the regularization constant respectively.
+    """
+    import numpy as np
+    import copy
+
+    #copy layer
+    newlayer = {}
+    newlayer["layer"] = copy.copy(layer["layer"])
+    newlayer["n"] = copy.copy(layer["n"])
+    newlayer["activation"] = copy.copy(layer["activation"])
+    newlayer["regval"] = copy.copy(layer["regval"])
+    newlayer["lreg"] = copy.copy(layer["lreg"])
+
+    #get bodyplan depth
+    nlayer = len(bodyplan)
+
+    #assign newlayer the correct layer index
+    newlayer["layer"] = nlayer
+
+    #push layer
+    bodyplan.append(newlayer)
+
+    return
 
 def reinit_ffn(model):
     """Reinitialize feed forward network model.
@@ -137,7 +212,7 @@ def reinit_ffn(model):
             "activation": model[layer]["activation"],
             "lreg":model[layer]["lreg"],
             "regval":model[layer]["regval"],
-            "weight": np.random.randn(ncurr, nprev), #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*init_weight_std, #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta

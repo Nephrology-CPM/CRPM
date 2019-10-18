@@ -1,5 +1,8 @@
 """ test early stopping various learning algorithms"""
 
+#early stopping constant
+nobv = 22
+
 def test_earlystopping_triggered():
     """ test early stopping is triggered with overfitting dataset."""
 
@@ -12,14 +15,18 @@ def test_earlystopping_triggered():
 
     #setup shallow model
     model, _, train, valid = setup_overfitting_shallow()
-    nobv = 24
+    #print(train.shape)
+    #print(valid.shape)
+    train = train[:,:nobv]
 
     #assert early stopping is triggered with dataset
-    _, _ = gradientdecent(model, train[:-1, :nobv], train[-1, :nobv],
+    _, _, ierr = gradientdecent(model, train[:-1, :], train[-1, :],
                           "mse", valid[:-1, :], valid[-1, :], earlystop=True)
 
-    #dose early stopping message appear
-    assert True
+    #does early stopping message appears
+    #assert True
+    print(ierr)
+    assert ierr == 2
 
 def test_naive_earlystopping_gradient_decent():
     """ test naive early stopping yeilds comperable outsample error using
@@ -36,28 +43,47 @@ def test_naive_earlystopping_gradient_decent():
 
     #setup shallow model
     model, _, train, valid = setup_overfitting_shallow()
-    train = train[:, :24] #reduce training data to ensure early stopping occours
+    train = train[:, :nobv] #reduce training data to ensure early stopping occours
+
+    #calculate initial error
+    _, cost0, _ = gradientdecent(model, train[:-1, :], train[-1, :],
+                             "mse", valid[:-1, :], valid[-1, :], maxepoch=0)
+
+    #reinit model
+    model = reinit_ffn(model)
 
     #calculate out-sample error with no early stopping
     start_time = time.clock()
-    _, cost = gradientdecent(model, train[:-1, :], train[-1, :],
+    _, cost, _ = gradientdecent(model, train[:-1, :], train[-1, :],
                              "mse", valid[:-1, :], valid[-1, :])
     run_time = time.clock()-start_time
-    print(cost)
-    print(run_time)
 
     #reinit model
     model = reinit_ffn(model)
 
     #calculate out-sample error with early stopping
     start_time = time.clock()
-    _, cost2 = gradientdecent(model, train[:-1, :], train[-1, :],
+    _, cost2, _ = gradientdecent(model, train[:-1, :], train[-1, :],
                               "mse", valid[:-1, :], valid[-1, :], earlystop=True)
     run_time2 = time.clock() - start_time
 
-    #assert relative difference of error with early stopping
-    #to error with no early stopping is less than 20%
-    assert abs(cost2-cost)/cost < .2
+    #calculate learning efficiency defined as amount cost reduced per wall-clock time.
+    leff = (cost0-cost)/run_time
+    leff2 = (cost0-cost2)/run_time2
+
+    print("cost initial = "+str(cost0))
+    print("cost = "+str(cost))
+    print("cost earlystop = "+str(cost2))
+    print("runtime = "+str(run_time))
+    print("runtime earlystop = "+str(run_time2))
+    print("efficiency = "+str((cost0-cost)/run_time))
+    print("efficiency earlystop= "+str((cost0-cost2)/run_time2))
 
     #assert learning with early stopping is faster than without
     assert run_time2 < run_time
+
+    #assert cost with early stopping is higher than without
+    assert cost2 > cost
+
+    #assert relative difference in learning efficiency is less than .2 with earlystopping
+    assert abs(leff2-leff)/leff < .2
