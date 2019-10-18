@@ -1,7 +1,7 @@
 """ Clustering by Kohonen self-organizing map
 """
 
-def coords(n,nx=None,ny=None,hcp=None):
+def coords(n, nx=None, ny=None, hcp=None):
     """ returns the coordinates of n points in 3 dimensions
         Args:
             n: integer number of coordinates to return
@@ -54,7 +54,7 @@ def coords(n,nx=None,ny=None,hcp=None):
     xyz -= np.mean(xyz, axis=0)
 
     #return coordinates
-    return(xyz, np.array([[ix+1,jx+1,kx+1]]))
+    return(xyz, np.array([[ix+1, jx+1, kx+1]]))
 
 def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     """initializes a map from an ffn model"""

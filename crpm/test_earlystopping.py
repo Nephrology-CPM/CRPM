@@ -1,7 +1,7 @@
 """ test early stopping various learning algorithms"""
 
 #early stopping constant
-nobv = 22
+NOBV = 22
 
 def test_earlystopping_triggered():
     """ test early stopping is triggered with overfitting dataset."""
@@ -17,11 +17,11 @@ def test_earlystopping_triggered():
     model, _, train, valid = setup_overfitting_shallow()
     #print(train.shape)
     #print(valid.shape)
-    train = train[:,:nobv]
+    train = train[:, :NOBV]
 
     #assert early stopping is triggered with dataset
     _, _, ierr = gradientdecent(model, train[:-1, :], train[-1, :],
-                          "mse", valid[:-1, :], valid[-1, :], earlystop=True)
+                                "mse", valid[:-1, :], valid[-1, :], earlystop=True)
 
     #does early stopping message appears
     #assert True
@@ -43,11 +43,11 @@ def test_naive_earlystopping_gradient_decent():
 
     #setup shallow model
     model, _, train, valid = setup_overfitting_shallow()
-    train = train[:, :nobv] #reduce training data to ensure early stopping occours
+    train = train[:, :NOBV] #reduce training data to ensure early stopping occours
 
     #calculate initial error
     _, cost0, _ = gradientdecent(model, train[:-1, :], train[-1, :],
-                             "mse", valid[:-1, :], valid[-1, :], maxepoch=0)
+                                 "mse", valid[:-1, :], valid[-1, :], maxepoch=0)
 
     #reinit model
     model = reinit_ffn(model)
@@ -55,7 +55,7 @@ def test_naive_earlystopping_gradient_decent():
     #calculate out-sample error with no early stopping
     start_time = time.clock()
     _, cost, _ = gradientdecent(model, train[:-1, :], train[-1, :],
-                             "mse", valid[:-1, :], valid[-1, :])
+                                "mse", valid[:-1, :], valid[-1, :])
     run_time = time.clock()-start_time
 
     #reinit model
@@ -64,7 +64,7 @@ def test_naive_earlystopping_gradient_decent():
     #calculate out-sample error with early stopping
     start_time = time.clock()
     _, cost2, _ = gradientdecent(model, train[:-1, :], train[-1, :],
-                              "mse", valid[:-1, :], valid[-1, :], earlystop=True)
+                                 "mse", valid[:-1, :], valid[-1, :], earlystop=True)
     run_time2 = time.clock() - start_time
 
     #calculate learning efficiency defined as amount cost reduced per wall-clock time.

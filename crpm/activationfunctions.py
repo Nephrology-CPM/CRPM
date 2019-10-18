@@ -124,7 +124,7 @@ def dgaussian(stimulus):
 def hat(stimulus):
     """definition of hat function
     """
-    return np.multiply(np.subtract(1,np.multiply(stimulus,stimulus)),
+    return np.multiply(np.subtract(1, np.multiply(stimulus, stimulus)),
                        gaussian(stimulus))
 
 #----------------------------------------------------

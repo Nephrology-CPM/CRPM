@@ -36,7 +36,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
     unfolded_bodyplan = copy_bodyplan(bodyplan)
     #push layers in reversed order to create a symmetric bodyplan
     for layer in reversed(bodyplan[:-1]):
-        push_bodyplanlayer(unfolded_bodyplan,layer)
+        push_bodyplanlayer(unfolded_bodyplan, layer)
     #create unfolded model from symmetric bodyplan
     smodel = init_ffn(unfolded_bodyplan)
     #print(smodel)
@@ -63,16 +63,16 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
     prevlayeractivity = data
 
     #do the same for the validation data
-    validprevlayeractivity=validata
-    if validata == None:
+    validprevlayeractivity = validata
+    if validata is None:
         #use last 20% of batches for validation
         vbatch = nbatch//5
         nbatch = nbatch - vbatch
-        prevlayeractivity = data[:,0:nbatch*batchsize]
-        validprevlayeractivity = data[:,nbatch*batchsize:]
+        prevlayeractivity = data[:, 0:nbatch*batchsize]
+        validprevlayeractivity = data[:, nbatch*batchsize:]
 
     # loop over first half of symmetric model begining with layer 1
-    for layerindex in range(1,nlayer):
+    for layerindex in range(1, nlayer):
 
         #encoding index is = layerindex
         #decoding index is = 2*nlayer - layerindex +1
@@ -92,13 +92,13 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             #define activity for visible layer
             def vsample():
                 """returns logistic visible layer activity given hiddenlayer state"""
-                stimulus = np.add(hidlayer["weight"].T.dot(hstate),vislayer["bias"])
-                return activation("logistic",stimulus)
+                stimulus = np.add(hidlayer["weight"].T.dot(hstate), vislayer["bias"])
+                return activation("logistic", stimulus)
             #define activity for hidden layer
             def hsample():
                 """returns logistic hidden layer activity and stocastic binary state given visible layer activity"""
-                stimulus = np.add(hidlayer["weight"].dot(vact),hidlayer["bias"])
-                hact = activation("logistic",stimulus)
+                stimulus = np.add(hidlayer["weight"].dot(vact), hidlayer["bias"])
+                hact = activation("logistic", stimulus)
                 return hact, hact > np.random.random(hact.shape)
         #2. Gaussian-Bernoulli
         if vtype == "linear" and htype == "logistic":
@@ -108,12 +108,12 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             #define activity for visible layer
             def vsample():
                 """returns linear plus gaussian noise visible layer activity given hidden layer state"""
-                stimulus = np.add(hidlayer["weight"].T.dot(hstate)*sigma,vislayer["bias"])
-                return np.random.normal(loc=stimulus,scale=sigma)
+                stimulus = np.add(hidlayer["weight"].T.dot(hstate)*sigma, vislayer["bias"])
+                return np.random.normal(loc=stimulus, scale=sigma)
             #define activity for hidden layer
             def hsample():
                 """returns logistic hidden layer activity and stocastic binary state given scaled visible layer activity"""
-                stimulus = np.add(hidlayer["weight"].dot(vact/sigma),hidlayer["bias"])
+                stimulus = np.add(hidlayer["weight"].dot(vact/sigma), hidlayer["bias"])
                 act = activation("logistic",stimulus)
                 return act, act > np.random.random(act.shape)
         #3. Bernoulli-Gaussian
@@ -122,8 +122,8 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             #define activity for visible layer
             def vsample():
                 """returns logistic visible layer activity given unit scaled hidden layer activity"""
-                stimulus = np.add(hidlayer["weight"].T.dot(hstate),vislayer["bias"])
-                return activation("logistic",stimulus)
+                stimulus = np.add(hidlayer["weight"].T.dot(hstate), vislayer["bias"])
+                return activation("logistic", stimulus)
             #define activity for hidden layer
             def hsample():
                 """returns linear plus unit var gaussian noise hidden layer activity and stocastic state given vislayer activity"""
@@ -139,8 +139,8 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
 
         #define free energy equation
         def feng(act):
-            stimulus = np.add(hidlayer["weight"].dot(act),hidlayer["bias"])
-            eng = -np.sum(np.multiply(act,vislayer["bias"]))
+            stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
+            eng = -np.sum(np.multiply(act, vislayer["bias"]))
             return eng - np.sum(np.log(1+np.exp(stimulus)))
 
         # continuous loop over learning steps (use exit conditions)
@@ -151,7 +151,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
         dweight = np.zeros(hidlayer["weight"].shape)
         dhbias = np.zeros(hidlayer["bias"].shape)
         dvbias = np.zeros(vislayer["bias"].shape)
-        freeeng = np.full(nadj,feng(validprevlayeractivity)
+        freeeng = np.full(nadj, feng(validprevlayeractivity)
                           -feng(prevlayeractivity))
         freeeng0 = np.copy(freeeng)
         earlystop = False
@@ -164,7 +164,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             for batch in range(nbatch):
 
                 #get minibatch
-                minibatch = prevlayeractivity[:,batch*batchsize:(batch+1)*batchsize]
+                minibatch = prevlayeractivity[:, batch*batchsize:(batch+1)*batchsize]
 
                 # get visible layer activity
                 vact = minibatch
@@ -195,7 +195,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                     # iterations so we overwrite hstate with the activity
                     hstate = np.copy(hact)
                     #exit condition
-                    if gibbs>=N:
+                    if gibbs >= N:
                         continuegibbs = False
                 # get product of visible layer and hidden layer actvities
                 nprod = hact.dot(vact.T)
@@ -226,25 +226,25 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                         dweight -= hidlayer["regval"]*hidlayer["weight"]
 
                 #adjust learning rate to ensure integrator doesn't break
-                alpha = alpha_norm*np.max(np.divide(hidlayer["weight"],dweight))
+                alpha = alpha_norm*np.max(np.divide(hidlayer["weight"], dweight))
                 #print(alpha)
 
                 #update weights with momentum term
-                hidlayer["weight"]+=momentum*dweight0+alpha*dweight
+                hidlayer["weight"] += momentum*dweight0+alpha*dweight
 
                 # update visible layer biases with momentum term
-                vislayer["bias"]+=momentum*dvbias0+alpha*dvbias
+                vislayer["bias"] += momentum*dvbias0+alpha*dvbias
 
                 # update hidden layer biases with momentum term
-                hidlayer["bias"]+=momentum*dhbias0+alpha*dhbias
+                hidlayer["bias"] += momentum*dhbias0+alpha*dhbias
 
             # periodically check free energy for overfitting
-            freeeng[epoch%nadj]=feng(validprevlayeractivity)-feng(prevlayeractivity)
+            freeeng[epoch%nadj] = feng(validprevlayeractivity)-feng(prevlayeractivity)
             #print(np.mean(freeeng))
             if epoch%nadj == 0:
                 if np.mean(freeeng) > np.mean(freeeng0)+0*np.std(freeeng0):
                     #initiate naive earlystopping
-                    earlystop= True
+                    earlystop = True
                     print("Free engergy prev = " +str(np.mean(freeeng0)))
                     print("Free engergy curr = " +str(np.mean(freeeng)))
                 freeeng0 = np.copy(freeeng)
@@ -253,7 +253,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             #exit if learning is taking too long
             if epoch > int(maxepoch):
                 print("Warning contrastivedivergence.py: Training is taking a long time!"+
-                    " - Try increaseing maxepoch - Training will end")
+                      " - Try increaseing maxepoch - Training will end")
                 exitcond = 1
                 continuelearning = False
             #exit if naive earlystopping has been engauged
@@ -263,10 +263,10 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                 continuelearning = False
 
         #symmeterize weights
-        vislayer["weight"]=hidlayer["weight"].T
+        vislayer["weight"] = hidlayer["weight"].T
 
         #hidlayer to original model
-        model[layerindex]=hidlayer
+        model[layerindex] = hidlayer
 
         #promote prevlayeractivity to current hidlayer activity
         vact = np.copy(prevlayeractivity)
