@@ -59,9 +59,13 @@ def dlinear(stimulus):
 def logistic(stimulus):
     """definition of logistic function
     """
-    logit = 1/(1 + np.exp(-stimulus))
-    logit[logit >= 1] = 1 - sys.float_info.epsilon
-    logit[logit <= 0] = sys.float_info.epsilon
+    logit = np.zeros(stimulus.shape) #init all zeros
+    logit[stimulus >= 40] = 1 #avoid overflow with big stim set logit=1
+    idx = np.where(np.abs(stimulus) < 40)
+    logit[idx] = 1/(1 + np.exp(-stimulus[idx]))
+
+    #logit[logit >= 1] = 1 - sys.float_info.epsilon
+    #logit[logit <= 0] = sys.float_info.epsilon
 
     return logit
 

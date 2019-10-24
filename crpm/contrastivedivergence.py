@@ -141,7 +141,10 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
         def feng(act):
             stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
             eng = -np.sum(np.multiply(act, vislayer["bias"]))
-            return eng - np.sum(np.log(1+np.exp(stimulus)))
+            zeng = stimulus #for large x: log(1+exp(x)) = x
+            xidx = np.where(stimulus < 12)
+            zeng[idx] = np.log(1+np.exp(stimulus[idx]))
+            return eng - np.sum(zeng)
 
         # continuous loop over learning steps (use exit conditions)
         print("training "+rbmtype+" RBM in layer "+str(layerindex))
