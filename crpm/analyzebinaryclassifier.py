@@ -133,9 +133,22 @@ def analyzebinaryclassifier(pred, targets):
             var["npv"] = trueneg/np.sum(~predpos)
             var["fomr"] = 1 - var["npv"]
 
-        var["lrpos"] = var["tpr"]/var["fpr"]
-        var["lrneg"] = var["fnr"]/var["tnr"]
-        var["dor"] = var["lrpos"]/var["lrneg"]
+
+        if var["fpr"] == 0:
+            var["lrpos"] = -1 #return negative if value is infinite
+        else:
+            var["lrpos"] = var["tpr"]/var["fpr"]
+
+        if var["tnr"] == 0:
+            var["lrneg"] = -1 #return negative if value is infinite
+        else:
+            var["lrneg"] = var["fnr"]/var["tnr"]
+
+        if var["lrneg"] == 0:
+            var["dor"] = -1 # will return negative if value is infinite
+        else:
+            var["dor"] = var["lrpos"]/var["lrneg"]
+
         var["f1score"] = 2/(1/var["tpr"]+1/var["ppv"])
         var["mcc"] = (np.sqrt(var["ppv"]*var["tpr"]*var["tnr"]*var["npv"])-
                       np.sqrt(var["fdr"]*var["fnr"]*var["fpr"]*var["fomr"]))

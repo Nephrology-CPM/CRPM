@@ -190,7 +190,9 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3 
             continuelearning = False
 
     #calculate node pair distances in real space and inversely weight by the map distance
-    umat = distance_matrix(map[-1]["weight"],map[-1]["weight"])/map[-1]["nodedist"]
+    umat = distance_matrix(map[-1]["weight"],map[-1]["weight"])
+    umat[np.where(map[-1]["nodedist"]!=0)] = umat[np.where(map[-1]["nodedist"]!=0)]/map[-1]["nodedist"][np.where(map[-1]["nodedist"]!=0)] #don't calculate the diagonal
+
     #accumulate weighted node distances for each node
     map[-1]["bias"] = np.nansum(umat,axis=1, keepdims=True)
     #normalize bias and assume boltzman-like distribution
