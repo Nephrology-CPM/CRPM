@@ -239,7 +239,8 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                         dweight -= hidlayer["regval"]*hidlayer["weight"]
 
                 #adjust learning rate to ensure integrator doesn't break
-                alpha = alpha_norm*np.max(np.divide(hidlayer["weight"], dweight))
+                if np.all(abs(dweight) >= np.finfo(float).eps):
+                    alpha = alpha_norm*np.max(np.divide(hidlayer["weight"], dweight))
                 #print(alpha)
 
                 #update weights with momentum term
