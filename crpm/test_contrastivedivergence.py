@@ -198,7 +198,7 @@ def test_pretrain_periodiccases():
     icost_encoder, _ = loss("mse", pred, valid)
 
     #pre-train model
-    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=100, momentum=.5)
+    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=.5)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(valid, autoencoder)
@@ -216,7 +216,7 @@ def test_pretrain_periodiccases():
     #plotroc(roc)
 
     #fine-tune model
-    pred, fcost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
+    pred, fcost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True, healforces=False)
 
     #calculate final out-sample analysis
     roc, freport = analyzebinaryclassifier(pred, validtargets)
