@@ -137,7 +137,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             print("Also ensure linear layers are not adjacent - that would be pointless btw.")
             return exitcond, smodel
 
-        #define free energy equation
+        #define free energy equation for binary-binary RBM
         def feng(act):
             stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
             eng = -np.sum(np.multiply(act, vislayer["bias"]))
