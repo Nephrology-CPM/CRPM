@@ -197,6 +197,9 @@ def reinit_ffn(model, weightstd=None):
     """
     import numpy as np
 
+    #always inform user model is being reinitialized
+    print("Reinitialing Model!")
+
     #get random initial weight std
     if weightstd is None:
         weightstd = init_weight_std

@@ -37,11 +37,12 @@ def setupdynamics(model, data, targets, lossname):
         maxf = []
         for layer in forces:
             index = layer["layer"]
-            maxf.append(np.max(np.abs(np.divide(layer["fweight"],
+            if np.all(abs(model[index]["weight"]) >= np.finfo(float).eps):
+                maxf.append(np.max(np.abs(np.divide(layer["fweight"],
                                                 model[index]["weight"]))))
         norm = np.max(maxf)
         #check for bad starting point: reinitialize model if it has bad forces
-        if norm >= huge:
+        if norm >= huge: 
             model = reinit_ffn(model)
     if attempt >= 100:
         print("Error in setupdynamics.py - cannot reinitialize model ")

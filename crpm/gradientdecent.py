@@ -2,7 +2,7 @@
 """
 
 def gradientdecent(model, data, targets, lossname, validata=None,
-                   valitargets=None, maxepoch=1E6, earlystop=False):
+                   valitargets=None, maxepoch=1E6, earlystop=False, healforces=True):
     """train fnn model by gradient decent
 
         Args:
@@ -34,8 +34,11 @@ def gradientdecent(model, data, targets, lossname, validata=None,
     tsum = np.sum(tgrid)
     tvar = nbuffer*np.sum(np.multiply(tgrid, tgrid))-tsum*tsum
 
-    #setup dynamics
-    forces = setupdynamics(model, data, targets, lossname)
+    #setup dynamics if requested (allows for reinit to heal bad forces)
+    if healforces:
+        forces = setupdynamics(model, data, targets, lossname)
+    else:
+        forces = computeforces(model, data, targets, lossname)
 
     #check if using validation set
     is_validating = not ((validata is None) or (valitargets is None))
