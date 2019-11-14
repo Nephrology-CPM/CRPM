@@ -64,18 +64,18 @@ def logistic(stimulus):
 
     # if stim is positive then exp(-stim) will not overflow
     xidx = np.where(stimulus >= 0)
-    logit =  np.exp(-stimulus[xidx])
-    output[xidx] = 1 / (1 + logit)
+    if len(xidx)>0:
+        logit =  np.exp(-stimulus[xidx])
+        output[xidx] = 1 / (1 + logit)
 
     # if stim is less than zero then logit will be small
     # denominator can not be zero either so we have numerical stability.
     xidx = np.where(stimulus < 0)
-    logit = np.exp(stimulus[xidx])
-    output[xidx] = logit / (1 + logit)
+    if len(xidx)>0:
+        logit = np.exp(stimulus[xidx])
+        output[xidx] = logit / (1 + logit)
 
-    #logit[logit >= 1] = 1 - sys.float_info.epsilon
-    #logit[logit <= 0] = sys.float_info.epsilon
-    #return logit
+    return output
 
 def dlogistic(stimulus):
     """definition of deriv of logistic function with respect to stimulus

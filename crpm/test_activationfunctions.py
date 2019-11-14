@@ -34,3 +34,14 @@ def test_relu():
     assert activation("relu", stim).shape == (5, 7)
     assert np.all(dactivation("relu", stim) == np.where(stim > 0, 1, .01))
     assert dactivation("relu", stim).shape == (5, 7)
+
+def test_logistic():
+    """test logistic function
+    """
+    stim = np.random.randn(5, 7)
+    #test for correct shape
+    assert activation("logistic", stim).shape == (5, 7)
+    assert dactivation("logistic", stim).shape == (5, 7)
+    #test for numerical stability
+    stim *= 1E-3
+    assert  not np.any(np.isnan(activation("logistic", stim)))

@@ -140,11 +140,21 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
         #define free energy equation for binary-binary RBM
         def feng(act):
             stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
-            eng = -np.sum(np.multiply(act, vislayer["bias"]))
-            zeng = stimulus #for large x: log(1+exp(x)) = x
-            xidx = np.where(stimulus < 12)
-            zeng[xidx] = np.log(1+np.exp(stimulus[xidx]))
-            return eng - np.sum(zeng)
+            #visible bias term
+            vbterm = -np.sum(np.multiply(act, vislayer["bias"]), axis=0)
+            # init hidden term
+            hidden_term = activation("vacuum",stimulus)
+            #for exp(stim) term numerical stability
+            #first calc where stimulus is negative
+            xidx = np.where(stimulus < 0)
+            #hidden term function for negative stimulus
+            hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
+            #then calc where stimulus is not negative
+            xidx = np.where(stimulus >= 0)
+            #hidden term function for not negative stimulus
+            hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
+            #free energy = visible_bias_term - hidden_term
+            return np.sum(vbterm - np.sum(hidden_term, axis=0))
 
         # continuous loop over learning steps (use exit conditions)
         print("training "+rbmtype+" RBM in layer "+str(layerindex))
