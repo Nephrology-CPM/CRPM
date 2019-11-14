@@ -28,7 +28,7 @@ def test_encode_nestedcs():
     icost, _ = loss("mse", pred, data)
 
     #train model
-    _, autoencoder = contrastivedivergence(model, data, N=10, maxepoch=100, momentum=0.1)
+    _, autoencoder = contrastivedivergence(model, data, ncd=10, maxepoch=100, momentum=0.1)
 
     #calculate final mean squared error
     pred, _ = fwdprop(data,autoencoder)
@@ -75,7 +75,7 @@ def test_encode_periodiccases():
     icost, _ = loss("mse", pred, train)
 
     #train model
-    _, autoencoder = contrastivedivergence(model, train, N=1, maxepoch=100, momentum=.5)
+    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=.5)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(train, autoencoder)
@@ -122,7 +122,7 @@ def test_encode_periodiccases_deep():
     icost, _ = loss("mse", pred, train)
 
     #train model
-    _, autoencoder = contrastivedivergence(model, train, N=1, maxepoch=200, momentum=0.0)
+    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=0.0)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(train, autoencoder)
@@ -198,7 +198,7 @@ def test_pretrain_periodiccases():
     icost_encoder, _ = loss("mse", pred, valid)
 
     #pre-train model
-    _, autoencoder = contrastivedivergence(model, train, N=1, maxepoch=100, momentum=.5)
+    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=100, momentum=.5)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(valid, autoencoder)
@@ -312,7 +312,7 @@ def test_pretrain_periodiccases_deep():
     icost_encoder, _ = loss("mse", pred, valid)
 
     #pre-train model
-    _, autoencoder = contrastivedivergence(model, train, N=1, maxepoch=200, momentum=0.0)
+    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=0.0)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(valid, autoencoder)
@@ -389,7 +389,7 @@ def test_stability_periodiccases_deep():
     icost, _ = loss("mse", pred, train)
 
     #train model
-    _, autoencoder = contrastivedivergence(model, train, N=1, maxepoch=200, momentum=0.0)
+    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=0.0)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(train, autoencoder)

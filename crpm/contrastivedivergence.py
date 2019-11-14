@@ -1,13 +1,13 @@
 """ NN training by contrastive divergence
 """
 
-def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, batchsize=10, validata=None):
+def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5, batchsize=10, validata=None):
     """unfold and train fnn model by contrastive divergence
 
         Args:
             model: deep FFN model
             data: features in rows, observations in columns.
-            N: number of contrastive divergence steps
+            cd: number of contrastive divergence steps
             maxepoch: hard limit of learning iterations default is 100
             nadj: period of learning rate adjustment in units of epochs
             momentum: fraction of previous change in weight carried over to
@@ -100,6 +100,26 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                 stimulus = np.add(hidlayer["weight"].dot(vact), hidlayer["bias"])
                 hact = activation("logistic", stimulus)
                 return hact, hact > np.random.random(hact.shape)
+            #define free energy equation for binary-binary RBM
+            def feng(act):
+                stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
+                #visible bias term
+                vbterm = -np.sum(np.multiply(act, vislayer["bias"]), axis=0)
+                # init hidden term
+                hidden_term = activation("vacuum",stimulus)
+                #for exp(stim) term numerical stability
+                #first calc where stimulus is negative
+                xidx = np.where(stimulus < 0)
+                #hidden term function for negative stimulus
+                hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
+                #then calc where stimulus is not negative
+                xidx = np.where(stimulus >= 0)
+                #hidden term function for not negative stimulus
+                hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
+                #free energy = visible_bias_term - hidden_term
+                return np.sum(vbterm - np.sum(hidden_term, axis=0))
+
+
         #2. Gaussian-Bernoulli
         if vtype == "linear" and htype == "logistic":
             rbmtype = "gaussian-bernoulli"
@@ -116,6 +136,26 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                 stimulus = np.add(hidlayer["weight"].dot(vact/sigma), hidlayer["bias"])
                 act = activation("logistic",stimulus)
                 return act, act > np.random.random(act.shape)
+            #define free energy equation for Gaussian - Bernoulli RBM
+            def feng(act):
+                stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
+                #visible bias term
+                vbterm = -np.transpose(act).dot(vislayer["bias"])
+                vbtemp = np.add(np.transpose(act).dot(act),np.transpose(vislayer["bias"]).dot(vislayer["bias"]))
+                vbterm = np.add(vbterm,vbtemp/2).T
+                # init hidden term
+                hidden_term = activation("vacuum",stimulus)
+                #for exp(stim) term numerical stability
+                #first calc where stimulus is negative
+                xidx = np.where(stimulus < 0)
+                #hidden term function for negative stimulus
+                hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
+                #then calc where stimulus is not negative
+                xidx = np.where(stimulus >= 0)
+                #hidden term function for not negative stimulus
+                hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
+                #free energy = visible_bias_term - hidden_term
+                return np.sum(vbterm - np.sum(hidden_term, axis=0))
         #3. Bernoulli-Gaussian
         if vtype == "logistic" and htype == "linear":
             rbmtype = "bernoulli-gaussian"
@@ -129,6 +169,27 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                 """returns linear plus unit var gaussian noise hidden layer activity and stocastic state given vislayer activity"""
                 stimulus = np.add(hidlayer["weight"].dot(vact),hidlayer["bias"])
                 return stimulus, np.random.normal(loc=stimulus)
+            #define free energy equation for Gaussian - Bernoulli RBM
+            print("free energy function is not properly defined for Bernouli-Gaussian RBM")
+            def feng(act):
+                stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
+                #visible bias term
+                vbterm = -np.transpose(act).dot(vislayer["bias"])
+                vbtemp = np.add(np.transpose(act).dot(act),np.transpose(vislayer["bias"].dot(vislayer["bias"])))
+                vbterm = np.add(vbterm,vbtemp/2).T
+                # init hidden term
+                hidden_term = activation("vacuum",stimulus)
+                #for exp(stim) term numerical stability
+                #first calc where stimulus is negative
+                xidx = np.where(stimulus < 0)
+                #hidden term function for negative stimulus
+                hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
+                #then calc where stimulus is not negative
+                xidx = np.where(stimulus >= 0)
+                #hidden term function for not negative stimulus
+                hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
+                #free energy = visible_bias_term - hidden_term
+                return np.sum(vbterm - np.sum(hidden_term, axis=0))
         #4. exit if unknown RBM type
         if rbmtype == None:
             exitcond = -1  #cannot run contrastive divergence on this model
@@ -137,36 +198,21 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
             print("Also ensure linear layers are not adjacent - that would be pointless btw.")
             return exitcond, smodel
 
-        #define free energy equation for binary-binary RBM
-        def feng(act):
-            stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
-            #visible bias term
-            vbterm = -np.sum(np.multiply(act, vislayer["bias"]), axis=0)
-            # init hidden term
-            hidden_term = activation("vacuum",stimulus)
-            #for exp(stim) term numerical stability
-            #first calc where stimulus is negative
-            xidx = np.where(stimulus < 0)
-            #hidden term function for negative stimulus
-            hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
-            #then calc where stimulus is not negative
-            xidx = np.where(stimulus >= 0)
-            #hidden term function for not negative stimulus
-            hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
-            #free energy = visible_bias_term - hidden_term
-            return np.sum(vbterm - np.sum(hidden_term, axis=0))
 
         # continuous loop over learning steps (use exit conditions)
         print("training "+rbmtype+" RBM in layer "+str(layerindex))
         continuelearning = True
+        momentum_adj = 0
         epoch = 0
         err = 0
         dweight = np.zeros(hidlayer["weight"].shape)
         dhbias = np.zeros(hidlayer["bias"].shape)
         dvbias = np.zeros(vislayer["bias"].shape)
-        freeeng = np.full(nadj, feng(validprevlayeractivity)
-                          -feng(prevlayeractivity))
-        freeeng0 = np.copy(freeeng)
+        valid_feng = np.full(nadj, feng(validprevlayeractivity))
+        train_feng = np.full(nadj, feng(prevlayeractivity))
+        #freeeng = np.full(nadj, feng(validprevlayeractivity)
+        #                  -feng(prevlayeractivity))
+        #freeeng0 = np.copy(freeeng)
         earlystop = False
         while continuelearning:
             #increment epoch counter
@@ -194,7 +240,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                 # get sum of hidden layer activity
                 phsum = np.sum(hact, axis=1, keepdims=True)
 
-                # loop over N Gibbs sampling iterations (at least one iteration)
+                # loop over ncd Gibbs sampling iterations (at least one iteration)
                 continuegibbs = True
                 gibbs = 0
                 while continuegibbs:
@@ -208,7 +254,7 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                     # iterations so we overwrite hstate with the activity
                     hstate = np.copy(hact)
                     #exit condition
-                    if gibbs >= N:
+                    if gibbs >= ncd:
                         continuegibbs = False
                 # get product of visible layer and hidden layer actvities
                 nprod = hact.dot(vact.T)
@@ -244,24 +290,38 @@ def contrastivedivergence(model, data, N=1, maxepoch=100, nadj=10, momentum=.5, 
                 #print(alpha)
 
                 #update weights with momentum term
-                hidlayer["weight"] += momentum*dweight0+alpha*dweight
+                hidlayer["weight"] += momentum_adj*dweight0+alpha*dweight
 
                 # update visible layer biases with momentum term
-                vislayer["bias"] += momentum*dvbias0+alpha*dvbias
+                vislayer["bias"] += momentum_adj*dvbias0+alpha*dvbias
 
                 # update hidden layer biases with momentum term
-                hidlayer["bias"] += momentum*dhbias0+alpha*dhbias
+                hidlayer["bias"] += momentum_adj*dhbias0+alpha*dhbias
 
             # periodically check free energy for overfitting
-            freeeng[epoch%nadj] = feng(validprevlayeractivity)-feng(prevlayeractivity)
+            valid_feng[epoch%nadj] = feng(validprevlayeractivity)
+            train_feng[epoch%nadj] = feng(prevlayeractivity)
+            #freeeng[epoch%nadj] = feng(validprevlayeractivity)-feng(prevlayeractivity)
             #print(np.mean(freeeng))
-            if epoch%nadj == 0:
-                if np.mean(freeeng) > np.mean(freeeng0)+0*np.std(freeeng0):
-                    #initiate naive earlystopping
-                    earlystop = True
-                    print("Free engergy prev = " +str(np.mean(freeeng0)))
-                    print("Free engergy curr = " +str(np.mean(freeeng)))
-                freeeng0 = np.copy(freeeng)
+            if epoch%nadj == (nadj-1):
+                #default turn off momentum
+                momentum_adj = 0
+                #if train_feng inc then turn off momentum and continue training
+                #else
+                if np.polyfit(np.arange(nadj),train_feng,1)[0] < 0:
+                #   if valid_feng is inc then initiate earlystopping
+                    if np.polyfit(np.arange(nadj),valid_feng,1)[0] > 0:
+                        earlystop = True
+                #   else turn on momentum and continue training
+                    else:
+                        momentum_adj = momentum
+
+                #if np.mean(freeeng) > np.mean(freeeng0)+0*np.std(freeeng0):
+                #    #initiate naive earlystopping
+                #    earlystop = True
+                #    print("Free engergy prev = " +str(np.mean(freeeng0)))
+                #    print("Free engergy curr = " +str(np.mean(freeeng)))
+                #freeeng0 = np.copy(freeeng)
 
             # - EXIT CONDITIONS -
             #exit if learning is taking too long
