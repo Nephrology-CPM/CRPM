@@ -1,0 +1,36 @@
+---
+title: "Untitled"
+author: "Daniel Montemayor"
+date: "12/6/2019"
+output: html_document
+---
+
+```{r}
+install.packages('alphashape3d')
+library(alphashape3d)
+```
+
+```{r}
+T1 <- rtorus(2000, 0.5, 1.5)
+ashape3d.obj <- ashape3d(T1, alpha = 0.4)
+# Random sample of N points in space with unit variance
+N=5000
+points <- matrix(data=c(rnorm(3*N)), nc=3)
+in3d <- inashape3d(ashape3d.obj, points = points)
+plot(ashape3d.obj, transparency = 0.2)
+colors <- ifelse(in3d, "blue", "green")
+rgl.points(points, col = colors)
+```
+```{r}
+T1 <- rtorus(2000, 0.5, 1.5)
+ashape3d.obj <- ashape3d(T1, alpha = 0.4)
+# Random sample of N points in space with unit variance
+N=5000
+points <- matrix(data=c(rnorm(3*N)), nc=3)
+in3d <- inashape3d(ashape3d.obj, points = points)
+in3d <- ifelse(in3d, 1, 0)
+points <- as.data.frame(points)
+in3d <- as.data.frame(in3d)
+data <- cbind(in3d,points)
+write.csv(data, file = "intorus.csv", row.names = FALSE)
+```

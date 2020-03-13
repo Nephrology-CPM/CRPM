@@ -10,3 +10,5 @@ temp/
 ~*
 *.html
 temp
+venv/
+*.npz

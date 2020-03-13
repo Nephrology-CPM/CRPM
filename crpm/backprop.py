@@ -1,4 +1,7 @@
 """FNN backpropagation scheme
+
+TODO: have independent regularization terms for weights and biases
+
 """
 
 
@@ -45,14 +48,16 @@ def backprop(model, state, dloss):
         dstim = dact * dactivation(layer["activation"], state[index]["stimulus"])
         #calculate layer derivative w.r.t. weight using dstim
         dweight = dstim.dot(state[index-1]["activity"].T)/norm
+        #calculate layer derivative w.r.t. bias using dstim
+        dbias = np.sum(dstim, axis=1, keepdims=True)/norm
         #add regularization term if specified by layer
         if layer["regval"] > 0:
             if layer["lreg"] == 1:
                 dweight += layer["regval"]*np.sign(layer["weight"])
+                dbias += layer["regval"]*np.sign(layer["bias"])
             elif layer["lreg"] == 2:
                 dweight += layer["regval"]*layer["weight"]
-        #calculate layer derivative w.r.t. bias using dstim
-        dbias = np.sum(dstim, axis=1, keepdims=True)/norm
+                dbias += layer["regval"]*layer["bias"]
         #calculate next layer down deriv wrt activity
         dact = layer["weight"].T.dot(dstim)
         # add forces to begining of list

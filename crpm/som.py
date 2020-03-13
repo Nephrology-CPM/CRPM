@@ -168,7 +168,6 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
 
     return  map, nclass
 
-
 def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3):#, mcclust=False ):
     """Train an som given the state of an ffn model
 
@@ -186,6 +185,7 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3)
     import numpy as np
     import random
     from scipy.spatial import distance_matrix
+    from progressbar import ProgressBar, Percentage, Bar, ETA, AdaptiveETA
     from crpm.activationfunctions import activation
 
     #get number of nodes and clusters
@@ -196,45 +196,43 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3)
     # 2) maxepoch is not positive signifies do no learning
     if maxepoch > 0:
         #set up for learning loop
-        count = 0
-        continuelearning = True
+        nobv = state[-2]["activity"].shape[1]
         #setup learning function and neighbor decay values ahead of loop
         lfunc = lstart*np.exp(-np.log(lstart/lend)/maxepoch*np.arange(maxepoch))
         sigma = nstart*np.exp(-np.log(nstart/nend)/maxepoch*np.arange(maxepoch))
-    else:
-        #do no learning
-        continuelearning = False
-    #learning loop
-    while continuelearning:
 
-        #choose random sample
-        obv = np.random.randint(state[-2]["activity"].shape[1])
+        #learning loop
+        widgets = [Percentage(),
+                   ' ', Bar(),
+                   ' ', ETA(),
+                   ' ', AdaptiveETA()]
+        pbar = ProgressBar(widgets=widgets)
+        for count in pbar(range(maxepoch)): #not really epochs, they are training steps
 
-        #calculate node vectors pointing to observation
-        map[-1]["weightdot"] = state[-2]["activity"][:, obv] - map[-1]["weight"]
+            #shuffle sample order after each epoch
+            if count%nobv == 0:
+                sampleorder = np.arange(nobv)
+                np.random.shuffle(sampleorder)
 
-        #calcuate distances
-        dist = np.linalg.norm(map[-1]["weightdot"],axis=1)
+            #choose random sample
+            #obv = np.random.randint(state[-2]["activity"].shape[1])
+            obv = sampleorder[count%nobv]
 
-        #get winning node
-        closestnode = np.argmin(dist)
+            #calculate node vectors pointing to observation
+            map[-1]["weightdot"] = state[-2]["activity"][:, obv] - map[-1]["weight"]
 
-        #calculate Neighborhood function
-        nfunc = activation(map[-1]["activation"],
-                           map[-1]["nodedist"][closestnode,:]/sigma[count]).reshape((nnode,1))
+            #calcuate distances
+            dist = np.linalg.norm(map[-1]["weightdot"],axis=1)
 
-        #evolve nodes parameterized by winning node
-        map[-1]["weight"] += lfunc[count]*nfunc*map[-1]["weightdot"]
+            #get winning node
+            closestnode = np.argmin(dist)
 
-        #update current learning step
-        count += 1
+            #calculate Neighborhood function
+            nfunc = activation(map[-1]["activation"],
+                            map[-1]["nodedist"][closestnode,:]/sigma[count]).reshape((nnode,1))
 
-        # - EXIT CONDITIONS -
-        #exit if learning is taking too long
-        if count >= int(maxepoch):
-            print("Warning som.py: Training is taking a long time!"+
-                  " - Try increaseing maxepoch - Training will end")
-            continuelearning = False
+            #evolve nodes parameterized by winning node
+            map[-1]["weight"] += lfunc[count]*nfunc*map[-1]["weightdot"]
 
     #calculate node pair distances in real space and weight by the map distance
     umat = distance_matrix(map[-1]["weight"],map[-1]["weight"])*map[-1]["nodedist"]

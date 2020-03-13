@@ -9,6 +9,8 @@ def loss(name, pred, target):
         return bce(pred, target)
     if name == "mse":
         return mse(pred, target)
+    if name == "iden":
+        return 0, np.ones(pred.shape)
     #default return function
     return mse(pred, target)
 #----------------------------------------------------

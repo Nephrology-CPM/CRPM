@@ -3,5 +3,6 @@ pytest
 numpy
 matplotlib
 scipy
-opencv
+#opencv
+progressbar
 #rstudio

@@ -88,49 +88,10 @@ def test_encode_periodiccases():
     #assert learning is taking place
     assert icost > cost
 
-def test_stability_periodiccases_deep():
-    """test stability of periodiccases deep model by contrastivedivergence
-    """
-    import numpy as np
-    from crpm.setup_periodiccases import setup_periodiccases_deep
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
-    from crpm.contrastivedivergence import contrastivedivergence
-
-    #init numpy seed
-    np.random.seed(40017)
-
-    #setup model
-    model, data = setup_periodiccases_deep()
-    nx = data.shape[0]
-    nsample = data.shape[1]
-
-    #partition training and validation data
-    valid = data[1:nx,0:nsample//3]
-    validtargets = data[0,0:nsample//3]
-    train = data[1:nx,nsample//3:nsample]
-    targets =data[0,nsample//3:nsample]
-
-    #return untrained autoencoder
-    _, autoencoder = contrastivedivergence(model, train, maxepoch=0)
-
-    #calculate initial reconstruction error
-    pred, _ = fwdprop(train, autoencoder)
-    icost, _ = loss("mse", pred, train)
-
-    #train model
-    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=0.1)
-
-    #calculate final reconstruction error
-    pred, _ = fwdprop(train, autoencoder)
-    cost, _ = loss("mse", pred, train)
-
-    #print(autoencoder)
-    #print(icost)
-    #print(cost)
-
-    #assert learning is taking place
-    assert icost > cost
+#deep encoder params
+ncd_deep = 1
+maxepoch_deep = 500#200
+momentum_deep = .05#.1
 
 def test_encode_periodiccases_deep():
     """test periodiccases can be encoded
@@ -166,7 +127,10 @@ def test_encode_periodiccases_deep():
     icost, _ = loss("mse", pred, train)
 
     #train model
-    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=0.1)
+    _, autoencoder = contrastivedivergence(model, train,
+                                           ncd=ncd_deep,
+                                           maxepoch=maxepoch_deep,
+                                           momentum=momentum_deep)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(train, autoencoder)
@@ -213,12 +177,13 @@ def test_pretrain_periodiccases_deep():
     if ireport["AreaUnderCurve"]<.5:
         pred = 1-pred
         icost, _ = loss("bce", pred, validtargets)
-        roc, report = analyzebinaryclassifier(pred, validtargets)
-    #print(report)
+        roc, ireport = analyzebinaryclassifier(pred, validtargets)
+    print(ireport)
     #plotroc(roc)
 
     #train model (no pre-training)
-    pred, cost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
+    pred, cost, _ = gradientdecent(model, train, targets, "bce",
+                                   valid, validtargets, earlystop=True)
     #print("no pre-training cost")
     #print(cost)
 
@@ -229,7 +194,7 @@ def test_pretrain_periodiccases_deep():
         pred = 1-pred
         cost, _ = loss("bce", pred, validtargets)
         roc, report = analyzebinaryclassifier(pred, validtargets)
-    #print(report)
+    print(report)
     #plotroc(roc)
 
     #re-init model
@@ -243,7 +208,10 @@ def test_pretrain_periodiccases_deep():
     icost_encoder, _ = loss("mse", pred, valid)
 
     #pre-train model
-    _, autoencoder = contrastivedivergence(model, train, ncd=1, maxepoch=200, momentum=0.1)
+    _, autoencoder = contrastivedivergence(model, train,
+                                           ncd=ncd_deep,
+                                           maxepoch=maxepoch_deep,
+                                           momentum=momentum_deep)
 
     #calculate final reconstruction error
     pred, _ = fwdprop(valid, autoencoder)
@@ -257,11 +225,13 @@ def test_pretrain_periodiccases_deep():
         pred = 1-pred
         mcost, _ = loss("bce", pred, validtargets)
         roc, mreport = analyzebinaryclassifier(pred, validtargets)
-    #print(report)
+    print(mreport)
     #plotroc(roc)
 
     #fine-tune model
-    pred, fcost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True, healforces=False)
+    pred, fcost, _ = gradientdecent(model, train, targets, "bce",
+                                    valid, validtargets, earlystop=True,
+                                    healforces=False)
 
     #calculate final out-sample analysis
     roc, freport = analyzebinaryclassifier(pred, validtargets)
@@ -269,11 +239,12 @@ def test_pretrain_periodiccases_deep():
         pred = 1-pred
         fcost, _ = loss("bce", pred, validtargets)
         roc, freport = analyzebinaryclassifier(pred, validtargets)
-    #print(report)
+    print(freport)
     #plotroc(roc)
 
     print("initial cost")
     print(icost)
+    print(ireport["AreaUnderCurve"])
     print("no pre-training cost")
     print(cost)
     print(report["AreaUnderCurve"])
