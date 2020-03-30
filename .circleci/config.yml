@@ -41,6 +41,7 @@ variables:
   integration_test: &integration_test
     run:
       name: Run integration tests
+      no_output_timeout: 30m
       command: ./integration.sh
   install_crpm: &install_crpm
     run:
