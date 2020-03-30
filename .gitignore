@@ -11,4 +11,4 @@ temp/
 *.html
 temp
 venv/
-*.npz
+buffer.npz

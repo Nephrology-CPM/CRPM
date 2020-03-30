@@ -137,8 +137,8 @@ def test_encode_periodiccases_deep():
     cost, _ = loss("mse", pred, train)
 
     #print(autoencoder)
-    #print(icost)
-    #print(cost)
+    print(icost)
+    print(cost)
 
     #assert learning is taking place
     assert icost > cost
