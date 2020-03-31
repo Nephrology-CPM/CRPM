@@ -89,7 +89,7 @@ def test_encode_periodiccases():
     assert icost > cost
 
 #deep encoder params
-ncd_deep = 1
+ncd_deep = 5
 maxepoch_deep = 500#200
 momentum_deep = .05#.1
 
@@ -142,6 +142,7 @@ def test_encode_periodiccases_deep():
 
     #assert learning is taking place
     assert icost > cost
+    assert False
 
 def test_pretrain_periodiccases_deep():
     """test pretained periodiccases model encodes better than non pretrained model
