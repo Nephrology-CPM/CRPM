@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def spectra2():
-    """ Return data set of 200 spectra.
+    """ Return data set of 600 spectra.
 
     Spectra consist of 20 cosine modes with uniform random frequencies
     from .1 to 10 in arbitray frequency units. Amplitudes are sampled
@@ -14,7 +14,7 @@ def spectra2():
     #constants
     nmode = 20 #number of modes
     ngroup = 2 # number of groups
-    nobv = 200 # number of observations
+    nobv = 600 # number of observations
     minfreq = .01 # slowest mode frequency
     maxfreq = .5 # fastest mode frequency
     sigma = .2 # amplitude standard deviation
@@ -24,7 +24,7 @@ def spectra2():
     omega = np.random.uniform(low=minfreq, high=maxfreq, size=(nmode,ngroup))
 
     #assign random groups
-    group = np.random.randint(ngroup, size=nobv)
+    group = np.random.randint(ngroup, size=(1,nobv))
 
     #assign random mode amplitutes
     eta = np.random.normal(loc=0, scale=sigma, size=(nmode, nobv))
@@ -38,15 +38,18 @@ def spectra2():
 
     #loop over groups
     for g in range(ngroup):
-        ingroup = np.where(group==g)[0]
+        ingroup = np.where(group[0,:]==g)[0]
         #construct spectra on space grid
         for i in range(ngrid):
             spec[i,ingroup] = np.sum(np.multiply(eta[:,ingroup], np.cos(omega[:,g:g+1]*i)), axis=0)
 
+    #add group labels to first row
+    spec = np.vstack((group,spec))
+
     #visualize spectra
-    #cols = np.where(group,"r", "b")
+    #cols = np.where(spec[0,:],"r", "b")
     #for s in range(10):
-    #    plt.plot(spec[:,s], c=cols[s])
+    #    plt.plot(spec[1:,s], c=cols[s])
     #plt.show()
 
     #visualize spectral density

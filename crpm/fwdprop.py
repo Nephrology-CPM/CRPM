@@ -1,15 +1,16 @@
 """ Compute state of ffn with from input dataset
 """
 
-from crpm.activationfunctions import activation
-
-def fwdprop(data, model):
+def fwdprop(data, body):
     """ Compute network activity stemming from input dataset
 
     Args:
         data: An ndarray representing the vectorized values of M input samples
             arranged in columns with Nx features arranged in rows.
-        model: A list of layer parameters represetning the model itself.
+            If model is an FFN object then the data will be transformed by
+            the FFN static pre-processing component.
+        model: FFN object or FFN body as a list of layer parameters
+            representing the model itself.
             Each layer is a dictionary with keys and shapes "weight":(n,nprev), and
             "bias" (n, 1).
 
@@ -25,22 +26,27 @@ def fwdprop(data, model):
             ...,
             {"activity":(NL, M), "stimulus":(NL, M)}].
     """
+    import numpy as np
+    from crpm.activationfunctions import activation
+
+    #init activity with data
+    #activity = data
 
     #init state variables for input layer with input data
     state = []
     state.append(
         {
             "layer":0,
-            "activity":data
+            "activity":data #activity
         }
     )
 
     #calculate state variables for hidden layers
-    prevlayeractivity = state[0]["activity"]
-    for layer in model[1:]:
-        stimulus = layer["weight"].dot(prevlayeractivity) + layer["bias"]
+    for layer in body[1:]:
+
+        stimulus = layer["weight"].dot(state[-1]["activity"]) + layer["bias"]
+        #stimulus = layer["weight"].dot(activity) + layer["bias"]
         activity = activation(layer["activation"], stimulus)
-        prevlayeractivity = activity
         state.append(
             {
                 "layer":layer["layer"],
@@ -49,7 +55,5 @@ def fwdprop(data, model):
             }
         )
 
-    #define prediction as top layer activity
-    prediction = state[-1]["activity"]
-
-    return prediction, state
+    #return predictions as top layer activity and the model state
+    return state[-1]["activity"], state

@@ -5,23 +5,24 @@ TODO: have independent regularization terms for weights and biases
 """
 
 
-def backprop(model, state, dloss):
+def backprop(body, state, dloss):
     """ Compute network forces based on activity and loss metric
 
     Args:
-        model: A list of layer parameters represetning the model itself.
-            Each layer is a dict with keys and shapes "weight":(n,nprev), and
-            "bias" (n, 1).
+        model: FFN object or FFN body as a list of layer parameters representing
+            the model itself. Each layer is a dict with keys and shapes
+            "weight":(n,nprev), and "bias" (n, 1).
         state: A list of layer activities and stimuli representing the
-            current model state cached for use in the subsequent backward
-            propagation step of the learning algorithm with keys and shapes
+            current model state with keys and shapes
             [{"activity":(Nx, M)}
            lossctivity":(N1, M), "stimulus":(N1, M)},
             {"activity":(N2, M), "stimulus":(N2, M)},
             ...,
             {"activity":(NL, M), "stimulus":(NL, M)}].
         dloss: array of derivaties of loss function with respect to top layer
-            activity
+            activity.
+            If model is an FFN object then the dloss is calcualted on the
+            post-processed top layer activity.
 
     Returns:
         forces: A list of layer parameter forces.
@@ -31,6 +32,10 @@ def backprop(model, state, dloss):
     import numpy as np
     from crpm.activationfunctions import dactivation
 
+    #only works on FFN.bodies not on FFN objects
+    #check if model is FFN object or FFN body
+    #body = ffn_body(model)
+
     #init forces
     forces = []
 
@@ -38,10 +43,10 @@ def backprop(model, state, dloss):
     dact = dloss
 
     #store number of samples
-    norm = model[-1]["bias"].shape[1]
+    norm = body[-1]["bias"].shape[1]
 
     #loop over layers (top to bottom) - calculatate dZ, dW, and db
-    for layer in reversed(model[1:]):
+    for layer in reversed(body[1:]):
         index = layer["layer"]
 
         #calculate layer derivative w.r.t. stimulus using dact of layer above
@@ -68,5 +73,4 @@ def backprop(model, state, dloss):
                           "fbias":-dbias
                       }
                      )
-
-    return forces
+    return forces, dact
