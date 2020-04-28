@@ -21,8 +21,8 @@ def test_solved_nestedcs():
     _, report = analyzebinaryclassifier(pred, data[-1,])
 
     assert report["AreaUnderCurve"] >= .92
-    assert report["Accuracy"] >= .84
-    assert report["F1Score"] >= .85
+    assert report["Accuracy"] >= .80
+    assert report["F1Score"] >= .80
 
 def will_roc_will_plot():
     """ test if roc output will plot properly"""

@@ -89,12 +89,12 @@ def test_som2d_init_pca():
     assert(abs(np.var(map[-1]["weight"][:,1])-yvar)/yvar < 1.0)
 
 
-def test_solve_nestedcs():
+def r_test_solve_nestedcs():
     """test nested cs can be solved
     """
-    #import matplotlib
-    #matplotlib.use('TkAgg')
-    #import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('TkAgg')
+    import matplotlib.pyplot as plt
 
     import numpy as np
     from crpm.setup_nestedcs import setup_nestedcs
@@ -115,20 +115,26 @@ def test_solve_nestedcs():
     #create and init map with model and its current state
     map, _ = init_som(model, state, n=100, nx=100, ny=1, hcp=True)
 
+    #plot data and map in real space
+    plt.scatter(data[0,],data[1,], c=data[-1,])
+    plt.plot(map[-1]["weight"][:,0],map[-1]["weight"][:,1])
+    plt.scatter(map[-1]["weight"][:,0],map[-1]["weight"][:,1])
+    plt.show()
+
     #conduct mapping
     pred, map = som(map, state, lstart = .2, lend=.001, nstart=50.0, nend=0.001, maxepoch=5000)
 
     #plot data and map in real space
-    #plt.scatter(data[0,],data[1,], c=data[-1,])
-    #plt.plot(map[-1]["weight"][:,0],map[-1]["weight"][:,1])
-    #plt.scatter(map[-1]["weight"][:,0],map[-1]["weight"][:,1])
-    #plt.show()
+    plt.scatter(data[0,],data[1,], c=data[-1,])
+    plt.plot(map[-1]["weight"][:,0],map[-1]["weight"][:,1])
+    plt.scatter(map[-1]["weight"][:,0],map[-1]["weight"][:,1])
+    plt.show()
 
     #plot map and centroids in mapping space
-    #plt.scatter(map[-1]["coord"][:,0],map[-1]["coord"][:,1],
-    #            c=map[-1]["bias"][:,0], cmap='gray')
+    plt.scatter(map[-1]["coord"][:,0],map[-1]["coord"][:,1],
+                c=map[-1]["bias"][:,0], cmap='gray')
     #plt.scatter(map[-1]["centroid"][:,0],map[-1]["centroid"][:,1], s=100)
-    #plt.show()
+    plt.show()
 
     #plot predictions in real space
     #plt.scatter(data[0,], data[1,], c=data[-1,]-pred[0,])
@@ -136,6 +142,6 @@ def test_solve_nestedcs():
 
     #analyze binary classifier
     _, report = analyzebinaryclassifier(pred, data[-1,])
-    #print(report)
+    print(report)
 
     assert report["MatthewsCorrCoef"] >= .5

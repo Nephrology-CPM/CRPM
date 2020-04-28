@@ -109,7 +109,9 @@ def test_solve_ffn_numberadder():
 
     #train numberadder model  with mean squared error
     _, data = load_dataset("crpm/data/numberadder.csv")
-    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse", healforces=False)
+    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse",
+                             healforces=False,
+                             finetune=7)
 
     print(model.body[1]["weight"])
 
@@ -142,7 +144,7 @@ def test_ffn_pre():
 
     #train numberadder model  with mean squared error
     _, data = load_dataset("crpm/data/numberadder.csv")
-    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse")
+    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse", finetune=7)
 
     print(model.body[1]["weight"])
 
@@ -173,11 +175,13 @@ def test_ffn_post():
 
     #train numberadder model  with mean squared error
     _, data = load_dataset("crpm/data/numberadder.csv")
-    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse")
+    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse",
+                             finetune=7)
 
     print(model.body[1]["weight"])
 
     assert np.allclose(model.body[1]["weight"], -1.0, rtol=.005)
+
 def test_ffn_prepost():
     """test with both pre and post processing blocks
     number adder should have positive weights with both inverting pre and post
@@ -215,7 +219,8 @@ def test_ffn_prepost():
 
     #train numberadder model  with mean squared error
     _, data = load_dataset("crpm/data/numberadder.csv")
-    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse")
+    _, _, _ = gradientdecent(model, data[0:5,], data[-1,], "mse",
+                             finetune=7)
 
     print(model.body[1]["weight"])
 

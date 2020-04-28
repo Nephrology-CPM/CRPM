@@ -120,7 +120,7 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     if(model[-1]["activation"]!="logistic" and model[-1]["activation"]!="softmax"):
         stop("som::init_map - input model is not a classifier.")
 
-    #define number of clusters from size top layer
+    #define number of clusters from size of top layer
     nclass = max(model[-1]["n"],2)
 
     #get model bodyplan
@@ -134,13 +134,13 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     map = init_ffn(bodyplan)
 
     #add node geometry to top layer and save unit cell scale factor
-    map[-1]["coord"],scale = coords(n, nx, ny ,hcp)
+    map[-1]["coord"], scale = coords(n, nx, ny ,hcp)
 
     #calcualte node pair distances in mapping space for given geometry
     map[-1]["nodedist"] = distance_matrix(map[-1]["coord"],map[-1]["coord"])
 
     #multiply scale factor by 2 for unit radius
-    scale = np.multiply(scale,0.5)
+    scale = np.multiply(scale, 0.5)
 
     #initialize node weights based on
     #first 3 principal components of the penultimate layer activity
@@ -157,6 +157,12 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     values, vectors = np.linalg.eig(vact)
     #calcualte feature variance for scaling
     sig = np.std(act, axis=1)[:,None]
+
+    print(mact)
+    print(sig)
+    print(values)
+    print(vectors)
+
     #add zero vectors if number of features is less than 3
     if vectors.shape[0] < 3:
         zerovectors = np.zeros((3-vectors.shape[0],vectors.shape[1]))

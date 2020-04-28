@@ -73,7 +73,7 @@ def computecost(model, data, targets, lossname):
     return pred, cost
 
 def maxforce(model, forces):
-    """ find max force on weights """
+    """ find max force on weights"""
     import numpy as np
     from crpm.ffn import FFN
 
@@ -89,7 +89,8 @@ def maxforce(model, forces):
         if np.all(abs(body[index]["weight"]) >= np.finfo(float).eps):
             maxf.append(np.max(np.abs(np.divide(layer["fweight"],
                                             body[index]["weight"]))))
-
+    #print(maxf)
+    #print(forces)
     return np.max(maxf)
 
 def setupdynamics(model, data, targets, lossname):

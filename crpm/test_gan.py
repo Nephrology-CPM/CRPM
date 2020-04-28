@@ -286,6 +286,8 @@ def test_afnetwork():
 
     #assert False
     #-- Main GAN training---
+    #ganerr = gan(generator, discriminator, train,
+    #                   maxepoch=100000, batchsize=1, finetune=6)
     ganerr = gan(generator, discriminator, train,
                        maxepoch=100000, batchsize=1, finetune=6)
 

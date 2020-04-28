@@ -21,7 +21,9 @@ def test_earlystopping_triggered():
 
     #assert early stopping is triggered with dataset
     _, _, ierr = gradientdecent(model, train[:-1, :], train[-1, :],
-                                "mse", valid[:-1, :], valid[-1, :], earlystop=True)
+                                "mse", valid[:-1, :], valid[-1, :],
+                                earlystop=True,
+                                finetune=7)
 
     #does early stopping message appears
     #assert True
@@ -49,13 +51,12 @@ def test_naive_earlystopping_gradient_decent():
     _, cost0, _ = gradientdecent(model, train[:-1, :], train[-1, :],
                                  "mse", valid[:-1, :], valid[-1, :], maxepoch=0)
 
-    #reinit model
-    model = reinit_ffn(model)
-
     #calculate out-sample error with no early stopping
     start_time = time.perf_counter()
     _, cost, _ = gradientdecent(model, train[:-1, :], train[-1, :],
-                                "mse", valid[:-1, :], valid[-1, :])
+                                "mse", valid[:-1, :], valid[-1, :],
+                                earlystop=False,
+                                finetune=7)
     run_time = time.perf_counter()-start_time
 
     #reinit model
@@ -64,7 +65,9 @@ def test_naive_earlystopping_gradient_decent():
     #calculate out-sample error with early stopping
     start_time = time.perf_counter()
     _, cost2, _ = gradientdecent(model, train[:-1, :], train[-1, :],
-                                 "mse", valid[:-1, :], valid[-1, :], earlystop=True)
+                                 "mse", valid[:-1, :], valid[-1, :],
+                                 earlystop=True,
+                                 finetune=7)
     run_time2 = time.perf_counter() - start_time
 
     #calculate learning efficiency defined as amount cost reduced per wall-clock time.

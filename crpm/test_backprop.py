@@ -25,7 +25,7 @@ def test_backprop_numberadder():
     __, data = load_dataset("crpm/data/numberadder.csv")
     pred, state = fwdprop(data[0:5,], addermodel)
     __, dloss = loss("mse", pred, data[-1,])
-    forces = backprop(addermodel, state, dloss)
+    forces, _ = backprop(addermodel, state, dloss)
 
     assert forces[-1]["fweight"].shape == (1, 5)
     assert np.allclose(1+forces[-1]["fweight"], 1, rtol=1E-7)
@@ -56,6 +56,6 @@ def test_numadd_forcedir():
     __, data = load_dataset("crpm/data/numberadder.csv")
     pred, state = fwdprop(data[0:5,], addermodel)
     __, dloss = loss("mse", pred, data[-1,])
-    forces = backprop(addermodel, state, dloss)
+    forces, _ = backprop(addermodel, state, dloss)
 
     assert np.all(forces[-1]["fweight"] < 0)

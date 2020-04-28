@@ -2,7 +2,8 @@
 """
 
 def langevindynamics(model, data, targets, lossname, validata=None,
-                     valitargets=None, maxepoch=int(1E6), maxbuffer=int(1E3)):
+                     valitargets=None, maxepoch=int(1E6), maxbuffer=int(1E3),
+                     finetune=6):
     """train fnn model by langevin dynamics
 
         Args:
@@ -19,14 +20,16 @@ def langevindynamics(model, data, targets, lossname, validata=None,
     import numpy as np
     import copy
     from crpm.dynamics import setupdynamics
-    from crpm.dynamics import normalizelearningrate
+    #from crpm.dynamics import normalizelearningrate
     from crpm.dynamics import computecost
     from crpm.dynamics import computeforces
+    from crpm.dynamics import maxforce
     from crpm.ffn_bodyplan import copy_ffn
     from crpm.pvalue import righttailpvalue
 
     #convergence test constants
-    alpha_norm = 5E-5 #scales learning rate by max force relative to weight
+    #alpha_norm = 5E-5 #scales learning rate by max force relative to weight
+    alpha_norm = 10**(-finetune)
     nbuffer = 500
     #maxslope = -1E-6 #max learning slope should be negative but close to zero
 
@@ -86,7 +89,8 @@ def langevindynamics(model, data, targets, lossname, validata=None,
         init_cost = copy.copy(cost)
 
         #normalize learning rate alpha based on current forces
-        alpha = normalizelearningrate(model, forces, alpha_norm)
+        #alpha = normalizelearningrate(model, forces, alpha_norm)
+        alpha = alpha_norm * maxforce(model, forces)
 
         #calculate langevin dynamics factors
         timestep = np.sqrt(2*alpha)

@@ -217,21 +217,15 @@ def test_classify_spectra2():
 
     import numpy as np
     from crpm.setup_spectra2 import setup_spectra2
-    from crpm.fwdprop import fwdprop
-    from crpm.lossfunctions import loss
+    from crpm.dynamics import computecost
     from crpm.gradientdecent import gradientdecent
-    from crpm.ffn_bodyplan import get_bodyplan
-    from crpm.ffn_bodyplan import new_layer
-    from crpm.ffn_bodyplan import push_bodyplanlayer
-    from crpm.ffn_bodyplan import init_ffn
     from crpm.analyzebinaryclassifier import analyzebinaryclassifier
-
 
     #init numpy seed
     np.random.seed(40017)
 
     #setup model
-    prototype, data = setup_spectra2()
+    discriminator, data = setup_spectra2()
 
     #partition data (labels on first row)
     nobv = data.shape[1]
@@ -241,46 +235,34 @@ def test_classify_spectra2():
     vtarget = data[0, cutoff:]
     valid = data[1:, cutoff:]
 
-    #add discriminating layer
-    bodyplan = get_bodyplan(prototype)
-    loglayer = new_layer(activation='logistic')
-    push_bodyplanlayer(bodyplan,loglayer)
-
-    #init discriminating model
-    discriminator = init_ffn(bodyplan)
-
-    #calculate initial binary corss entropy error
-    pred, _ = fwdprop(valid, discriminator)
-    icost, _ = loss("bce", pred, vtarget)
-    print(icost)
-
     #analyze untrained discriminator
-    pred, _ = fwdprop(valid, discriminator)
+    pred, icost = computecost(discriminator, valid, vtarget, "bce")
     roc, ireport = analyzebinaryclassifier(pred, vtarget)
     if ireport["AreaUnderCurve"]<.5:
-        pred = 1-pred
-        icost, _ = loss("bce", pred, vtarget)
-        roc, ireport = analyzebinaryclassifier(pred, vtarget)
+        #flip labels
+        pred, icost = computecost(discriminator, valid, 1-vtarget, "bce")
+        roc, ireport = analyzebinaryclassifier(pred, 1-vtarget)
     print(ireport)
     #plotroc(roc)
 
-    #train model
+    #train discriminator
     pred, cost, _ = gradientdecent(discriminator, train, target, "bce",
-                                   valid, vtarget, earlystop=True)
-    print(cost)
+                                   valid, vtarget,
+                                   earlystop=True,
+                                   finetune=7)
 
-    #analyze binary classifier
-    pred, _ = fwdprop(valid, discriminator)
+    #analyze discriminator
+    print("analyze trained discriminator to iden subtype")
+    pred, cost = computecost(discriminator, valid, vtarget, "bce")
     roc, report = analyzebinaryclassifier(pred, vtarget)
     if report["AreaUnderCurve"]<.5:
-        pred = 1-pred
-        cost, _ = loss("bce", pred, vtarget)
-        roc, report = analyzebinaryclassifier(pred, vtarget)
+        #flip labels
+        pred, cost = computecost(discriminator, valid, 1-vtarget, "bce")
+        roc, report = analyzebinaryclassifier(pred, 1-vtarget)
     print(report)
     #plotroc(roc)
 
-    #assert learning has taken place
+    #assert discriminator can be trained by binary cross entropy error
     assert icost > cost
-
     assert report["AreaUnderCurve"] > ireport["AreaUnderCurve"]
     assert report["AreaUnderCurve"] > .8
