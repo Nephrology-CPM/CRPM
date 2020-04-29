@@ -1,7 +1,8 @@
 """ NN training by contrastive divergence
 """
 
-def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5, batchsize=10, validata=None):
+def contrastivedivergence(model, data, validata=None, ncd=1, maxepoch=100,
+                          nadj=10, momentum=.5, batchsize=10, finetune=6):
     """unfold and train fnn model by contrastive divergence
 
         Args:
@@ -56,8 +57,9 @@ def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5
     np.random.shuffle(data)
     data = data.T
 
-    #konstant: scales learning rate by max force relative to weight
-    alpha_norm = 5E-6
+    #alpha norm scales learning rate by max force relative to weight
+    alpha_norm = 10**(-finetune)
+    #alpha_norm = 1E-8#7#5E-6
 
     #initialize previous layer activity with input data for layer 0
     prevlayeractivity = data
@@ -82,6 +84,14 @@ def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5
         vislayer = smodel[decodeindex]
         hidlayer = smodel[layerindex]
 
+        #get number of nodes per layer
+        nv = vislayer["n"]
+        nh = hidlayer["n"]
+
+        #initialize connecting weights ±4sqrt(6/(nv+nh))
+        hidlayer["weight"] = ((np.random.rand(nh, nv)-1/2)*
+                              8*np.sqrt(6/(nh+nv)))
+
         #determine appropriate RBM type
         vtype = vislayer["activation"]
         htype = hidlayer["activation"]
@@ -102,22 +112,33 @@ def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5
                 return hact, hact > np.random.random(hact.shape)
             #define free energy equation for binary-binary RBM
             def feng(act):
+                #visible bias term: dim (1,m)
+                #vbterm = -np.sum(np.multiply(act, vislayer["bias"]), axis=0)
+                vbterm = -vislayer["bias"].T.dot(act)
+
+                #hidden layer stimulus : dim (nh,m)
                 stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
-                #visible bias term
-                vbterm = -np.sum(np.multiply(act, vislayer["bias"]), axis=0)
-                # init hidden term
-                hidden_term = activation("vacuum",stimulus)
+
+                # init hidden term : dim (nh,m)
+                #hidden_term = activation("vacuum",stimulus)
                 #for exp(stim) term numerical stability
                 #first calc where stimulus is negative
-                xidx = np.where(stimulus < 0)
+                #xidx = np.where(stimulus < 0)
                 #hidden term function for negative stimulus
-                hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
+                #hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
                 #then calc where stimulus is not negative
-                xidx = np.where(stimulus >= 0)
+                #xidx = np.where(stimulus >= 0)
                 #hidden term function for not negative stimulus
-                hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
-                #free energy = visible_bias_term - hidden_term
-                return np.sum(vbterm - np.sum(hidden_term, axis=0))
+                #hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
+                hidden_term = np.where(stimulus < 0,
+                                       np.log(1+np.exp(stimulus)),
+                                       stimulus+np.log(1+np.exp(-stimulus)))
+
+                #sum over hidden units to get true hidden_term : dim (1,m)
+                hidden_term = np.sum(hidden_term, axis=0)
+
+                #free energy = sum over samples (visible_bias_term - hidden_term)
+                return np.sum(vbterm - hidden_term)
 
 
         #2. Gaussian-Bernoulli
@@ -138,24 +159,39 @@ def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5
                 return act, act > np.random.random(act.shape)
             #define free energy equation for Gaussian - Bernoulli RBM
             def feng(act):
+
+                #hidden layer stimulus : dim (nh,m)
                 stimulus = np.add(hidlayer["weight"].dot(act), hidlayer["bias"])
-                #visible bias term
-                vbterm = -np.transpose(act).dot(vislayer["bias"])
-                vbtemp = np.add(np.transpose(act).dot(act),np.transpose(vislayer["bias"]).dot(vislayer["bias"]))
-                vbterm = np.add(vbterm,vbtemp/2).T
-                # init hidden term
-                hidden_term = activation("vacuum",stimulus)
+
+                # init hidden term : dim (nh,m)
+                #hidden_term = activation("vacuum",stimulus)
                 #for exp(stim) term numerical stability
                 #first calc where stimulus is negative
-                xidx = np.where(stimulus < 0)
+                #xidx = np.where(stimulus < 0)
                 #hidden term function for negative stimulus
-                hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
+                #hidden_term[xidx] = np.log(1+np.exp(stimulus[xidx]))
                 #then calc where stimulus is not negative
-                xidx = np.where(stimulus >= 0)
+                #xidx = np.where(stimulus >= 0)
                 #hidden term function for not negative stimulus
-                hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
-                #free energy = visible_bias_term - hidden_term
-                return np.sum(vbterm - np.sum(hidden_term, axis=0))
+                #hidden_term[xidx] = stimulus[xidx]+np.log(1+np.exp(-stimulus[xidx]))
+                hidden_term = np.where(stimulus < 0,
+                                       np.log(1+np.exp(stimulus)),
+                                       stimulus+np.log(1+np.exp(-stimulus)))
+
+                #sum over hidden units to get true hidden_term : dim (1,m)
+                hidden_term = np.sum(hidden_term, axis=0)
+
+                #visible bias term: dim (1,m)
+                vbterm = -vislayer["bias"].T.dot(act)
+
+                #square term
+                sqterm = np.trace(act.T.dot(act)+
+                                  vislayer["bias"].T.dot(vislayer["bias"]))/2
+
+                #free energy = vbterm +[act^2 +vbias^2]/2 - hidden_term)
+                return np.sum(vbterm - hidden_term) + sqterm
+
+
         #3. Bernoulli-Gaussian
         if vtype == "logistic" and htype == "linear":
             rbmtype = "bernoulli-gaussian"
@@ -327,7 +363,7 @@ def contrastivedivergence(model, data, ncd=1, maxepoch=100, nadj=10, momentum=.5
             #exit if learning is taking too long
             if epoch > int(maxepoch):
                 print("Warning contrastivedivergence.py: Training is taking a long time!"+
-                      " - Try increaseing maxepoch - Training will end")
+                      " - Try increasing maxepoch - Training will end")
                 exitcond = 1
                 continuelearning = False
             #exit if naive earlystopping has been engauged

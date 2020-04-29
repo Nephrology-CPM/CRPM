@@ -1,3 +1,4 @@
 layer,n,activation
 0,2,linear
-1,1,logistic
+1,5,logistic
+2,1,logistic

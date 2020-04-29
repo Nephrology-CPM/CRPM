@@ -120,7 +120,7 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     if(model[-1]["activation"]!="logistic" and model[-1]["activation"]!="softmax"):
         stop("som::init_map - input model is not a classifier.")
 
-    #define number of clusters from size top layer
+    #define number of clusters from size of top layer
     nclass = max(model[-1]["n"],2)
 
     #get model bodyplan
@@ -134,13 +134,13 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     map = init_ffn(bodyplan)
 
     #add node geometry to top layer and save unit cell scale factor
-    map[-1]["coord"],scale = coords(n, nx, ny ,hcp)
+    map[-1]["coord"], scale = coords(n, nx, ny ,hcp)
 
     #calcualte node pair distances in mapping space for given geometry
     map[-1]["nodedist"] = distance_matrix(map[-1]["coord"],map[-1]["coord"])
 
     #multiply scale factor by 2 for unit radius
-    scale = np.multiply(scale,0.5)
+    scale = np.multiply(scale, 0.5)
 
     #initialize node weights based on
     #first 3 principal components of the penultimate layer activity
@@ -157,6 +157,12 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     values, vectors = np.linalg.eig(vact)
     #calcualte feature variance for scaling
     sig = np.std(act, axis=1)[:,None]
+
+    print(mact)
+    print(sig)
+    print(values)
+    print(vectors)
+
     #add zero vectors if number of features is less than 3
     if vectors.shape[0] < 3:
         zerovectors = np.zeros((3-vectors.shape[0],vectors.shape[1]))
@@ -167,7 +173,6 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     map[-1]["weight"] = ((map[-1]["coord"]/scale).dot(vectors[0:3,:]))*sig.T+mact[:, None].T
 
     return  map, nclass
-
 
 def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3):#, mcclust=False ):
     """Train an som given the state of an ffn model
@@ -186,6 +191,7 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3)
     import numpy as np
     import random
     from scipy.spatial import distance_matrix
+    from progressbar import ProgressBar, Percentage, Bar, ETA, AdaptiveETA
     from crpm.activationfunctions import activation
 
     #get number of nodes and clusters
@@ -196,45 +202,43 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3)
     # 2) maxepoch is not positive signifies do no learning
     if maxepoch > 0:
         #set up for learning loop
-        count = 0
-        continuelearning = True
+        nobv = state[-2]["activity"].shape[1]
         #setup learning function and neighbor decay values ahead of loop
         lfunc = lstart*np.exp(-np.log(lstart/lend)/maxepoch*np.arange(maxepoch))
         sigma = nstart*np.exp(-np.log(nstart/nend)/maxepoch*np.arange(maxepoch))
-    else:
-        #do no learning
-        continuelearning = False
-    #learning loop
-    while continuelearning:
 
-        #choose random sample
-        obv = np.random.randint(state[-2]["activity"].shape[1])
+        #learning loop
+        widgets = [Percentage(),
+                   ' ', Bar(),
+                   ' ', ETA(),
+                   ' ', AdaptiveETA()]
+        pbar = ProgressBar(widgets=widgets)
+        for count in pbar(range(maxepoch)): #not really epochs, they are training steps
 
-        #calculate node vectors pointing to observation
-        map[-1]["weightdot"] = state[-2]["activity"][:, obv] - map[-1]["weight"]
+            #shuffle sample order after each epoch
+            if count%nobv == 0:
+                sampleorder = np.arange(nobv)
+                np.random.shuffle(sampleorder)
 
-        #calcuate distances
-        dist = np.linalg.norm(map[-1]["weightdot"],axis=1)
+            #choose random sample
+            #obv = np.random.randint(state[-2]["activity"].shape[1])
+            obv = sampleorder[count%nobv]
 
-        #get winning node
-        closestnode = np.argmin(dist)
+            #calculate node vectors pointing to observation
+            map[-1]["weightdot"] = state[-2]["activity"][:, obv] - map[-1]["weight"]
 
-        #calculate Neighborhood function
-        nfunc = activation(map[-1]["activation"],
-                           map[-1]["nodedist"][closestnode,:]/sigma[count]).reshape((nnode,1))
+            #calcuate distances
+            dist = np.linalg.norm(map[-1]["weightdot"],axis=1)
 
-        #evolve nodes parameterized by winning node
-        map[-1]["weight"] += lfunc[count]*nfunc*map[-1]["weightdot"]
+            #get winning node
+            closestnode = np.argmin(dist)
 
-        #update current learning step
-        count += 1
+            #calculate Neighborhood function
+            nfunc = activation(map[-1]["activation"],
+                            map[-1]["nodedist"][closestnode,:]/sigma[count]).reshape((nnode,1))
 
-        # - EXIT CONDITIONS -
-        #exit if learning is taking too long
-        if count >= int(maxepoch):
-            print("Warning som.py: Training is taking a long time!"+
-                  " - Try increaseing maxepoch - Training will end")
-            continuelearning = False
+            #evolve nodes parameterized by winning node
+            map[-1]["weight"] += lfunc[count]*nfunc*map[-1]["weightdot"]
 
     #calculate node pair distances in real space and weight by the map distance
     umat = distance_matrix(map[-1]["weight"],map[-1]["weight"])*map[-1]["nodedist"]

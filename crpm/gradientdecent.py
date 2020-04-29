@@ -2,14 +2,15 @@
 """
 
 def gradientdecent(model, data, targets, lossname, validata=None,
-                   valitargets=None, maxepoch=1E6, earlystop=False, healforces=True):
+                   valitargets=None, maxepoch=1E6, earlystop=False,
+                   healforces=True, finetune=6):
     """train fnn model by gradient decent
 
         Args:
-            model:
-            data:
-            targets:
-            lossname:
+            model: FFN object or as the body in FFN class
+            data: training data with features in columns and observation in rows
+            targets: labels with targets in columns and observation in rows
+            lossname: loss function string defined in crmp.lossfunctions
             validata: data used to calculate out-sample error
             valitargets: targets used to calculate out-sample error
             maxiteration: hard limit of learning iterations default is 10000
@@ -21,13 +22,18 @@ def gradientdecent(model, data, targets, lossname, validata=None,
 
     import numpy as np
     from crpm.dynamics import setupdynamics
-    from crpm.dynamics import normalizelearningrate
+    #from crpm.dynamics import normalizelearningrate
     from crpm.dynamics import computecost
     from crpm.dynamics import computeforces
+    from crpm.dynamics import maxforce
     from crpm.ffn_bodyplan import copy_ffn
+    from crpm.ffn import FFN
 
     #convergence test constants
-    alpha_norm = 5E-5 #scales learning rate by max force relative to weight
+    #alpha norm scales learning rate by max force relative to weight
+    alpha_norm = 10**(-finetune)
+    #alpha_norm = 1E-8#7#5E-6
+    #alpha_norm = 1E-7#5 #scales learning rate by max force relative to weight
     nbuffer = 500
     maxslope = -1E-6 #max learning slope should be negative but close to zero
     tgrid = np.array(range(nbuffer))
@@ -50,13 +56,16 @@ def gradientdecent(model, data, targets, lossname, validata=None,
         else:
             pred, cost = computecost(model, data, targets, lossname)
         return pred, cost
-
     #calculate out-sample error
     _, cost = out_sample_error()
 
     #init best error and model
     best_cost = np.copy(cost)
-    best_model = copy_ffn(model)
+    if isinstance(model, FFN):
+        best_model = model.copy()
+    else:
+        best_model = copy_ffn(model)
+
 
     #iterate training until:
     # 1) cost converges - defined as when slope of costbuffer is greater than to -1e-6
@@ -78,7 +87,8 @@ def gradientdecent(model, data, targets, lossname, validata=None,
         costbuffer = []
 
         #normalize learning rate alpha based on current forces
-        alpha = normalizelearningrate(model, forces, alpha_norm)
+        alpha = alpha_norm * maxforce(model, forces)
+        #alpha = normalizelearningrate(model, forces, alpha_norm)
 
         #loop for training steps in buffer
         for i in tgrid:
@@ -86,11 +96,16 @@ def gradientdecent(model, data, targets, lossname, validata=None,
             #update current learning step
             count += 1
 
-            #update model
+            #update body wieghts and biases
+            body = model
+            if isinstance(model, FFN):
+                body = model.body
+
+            #loop over layer
             for layer in forces:
                 index = layer["layer"]
-                model[index]["weight"] = model[index]["weight"] + alpha * layer["fweight"]
-                model[index]["bias"] = model[index]["bias"] + alpha * layer["fbias"]
+                body[index]["weight"] = body[index]["weight"] + alpha * layer["fweight"]
+                body[index]["bias"] = body[index]["bias"] + alpha * layer["fbias"]
 
             #compute forces
             forces = computeforces(model, data, targets, lossname)
@@ -108,9 +123,12 @@ def gradientdecent(model, data, targets, lossname, validata=None,
 
         #Record best error and save model
         if cost <= best_cost:
-            #print(cost)
             best_cost = np.copy(cost)
-            best_model = copy_ffn(model)
+            if isinstance(model, FFN):
+                best_model = model.copy()
+            else:
+                best_model = copy_ffn(model)
+
 
         # - EXIT CONDITIONS -
         #exit if learning is taking too long
@@ -137,7 +155,10 @@ def gradientdecent(model, data, targets, lossname, validata=None,
             continuelearning = False
 
     #return best model
-    model = copy_ffn(best_model)
+    if isinstance(model, FFN):
+        best_model = model.copy()
+    else:
+        best_model = copy_ffn(model)
 
     #return predictions and cost
     return (*out_sample_error(),exitcond)

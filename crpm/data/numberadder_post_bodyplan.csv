@@ -1,0 +1,4 @@
+layer,n,activation
+0,1,linear
+1,2,linear
+2,1,linear

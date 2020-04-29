@@ -18,6 +18,9 @@ def activation(name, stimulus):
         return gaussian(stimulus)
     if name == "hat":
         return hat(stimulus)
+    if name == "vacuum":
+        return vacuum(stimulus)
+    print("WARNING - unknown activation function: " +name)
     return vacuum(stimulus)
 
 def dactivation(name, stimulus):
@@ -59,7 +62,7 @@ def dlinear(stimulus):
 def logistic(stimulus):
     """definition of logistic function
     """
-    #init output
+    #init output to small
     output = vacuum(stimulus)
 
     # if stim is positive then exp(-stim) will not overflow

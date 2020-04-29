@@ -9,6 +9,10 @@ def loss(name, pred, target):
         return bce(pred, target)
     if name == "mse":
         return mse(pred, target)
+    if name == "upmse":
+        return upmse(pred, target)
+    if name == "iden":
+        return 0, np.ones(pred.shape)
     #default return function
     return mse(pred, target)
 #----------------------------------------------------
@@ -30,6 +34,35 @@ def mse(pred, target):
     """
     dloss = np.subtract(pred, target)
     cost = np.square(dloss).mean()/2.0
+    return cost, dloss
+
+#----------------------------------------------------
+
+def upmse(pred, target):
+    """Un-paired Mean squared error function
+    """
+    #get number of samples in pred and target
+    mobv = target.shape[1]
+    mhat = pred.shape[1]
+
+    #init closest sample matrix of shape (mobv, mhat)
+    #indicates if sample in mhat is closest to mobv
+    # so each row is a one-hot vector of size mhat
+    sigma = np.zeros((mobv,mhat))
+
+    #Find closest pred for each target by brute force
+    for m in range(mobv):
+        sqdist = np.sum(np.square(pred - target[:, m:m+1]), axis=0)
+        #set one-hot vector in row m
+        sigma[m, np.argmin(sqdist)] = 1
+
+    #Normalize closest sample matrix to have unit sum over mobv
+    norm = np.sum(sigma, axis=1, keepdims=True)
+    norm = np.where(norm>1, norm, 1) #if colsum is zero then norm is 1
+    sigmat = np.divide(sigma, norm)  #to avoid divide by zero here
+
+    dloss = np.subtract(pred, target.dot(sigmat))
+    cost = np.square(np.subtract(pred.dot(sigma.T), target)).mean()/2.0
     return cost, dloss
 
 #----------------------------------------------------

@@ -85,20 +85,21 @@ def test_solve_nestedcs_bce():
     assert icost > cost
     assert cost < .29
 
-def test_solve_periodiccases_bce():
-    """test periodiccases can be solved
+def test_solve_toruscases_bce():
+    """test toruscases can be solved
     """
     import numpy as np
-    from crpm.setup_periodiccases import setup_periodiccases
+    from crpm.setup_toruscases import setup_toruscases
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.gradientdecent import gradientdecent
+    from crpm.analyzebinaryclassifier import analyzebinaryclassifier
 
     #init numpy seed
     np.random.seed(40017)
 
     #setup model
-    model, data = setup_periodiccases()
+    model, data = setup_toruscases()
     nx = data.shape[0]
     nsample = data.shape[1]
 
@@ -112,29 +113,54 @@ def test_solve_periodiccases_bce():
     pred, _ = fwdprop(train, model)
     icost, _ = loss("bce", pred, targets)
 
+    #analyze binary classifier
+    pred, _ = fwdprop(valid, model)
+    roc, ireport = analyzebinaryclassifier(pred, validtargets)
+    if ireport["AreaUnderCurve"]<.5:
+        pred = 1-pred
+        icost, _ = loss("bce", pred, validtargets)
+        roc, ireport = analyzebinaryclassifier(pred, validtargets)
+    print(ireport)
+    #plotroc(roc)
+
     #train model
     pred, cost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
 
-    print(model)
+    #analyze binary classifier
+    pred, _ = fwdprop(valid, model)
+    roc, report = analyzebinaryclassifier(pred, validtargets)
+    if report["AreaUnderCurve"]<.5:
+        pred = 1-pred
+        cost, _ = loss("bce", pred, validtargets)
+        roc, report = analyzebinaryclassifier(pred, validtargets)
+    print(report)
+    #plotroc(roc)
+
+
+    #print(model)
     print(icost)
     print(cost)
     assert icost > cost
-    assert cost < .71
+    assert cost < .4
+    assert report["MatthewsCorrCoef"] > .1
+    #don't expect problem can be solved with linear model
+    #assert report["AreaUnderCurve"] > ireport["AreaUnderCurve"]
 
-def test_solve_periodiccases_deep_bce():
-    """test periodiccases_deep can be solved
+def rtest_solve_toruscases_deep_bce():
+    """test toruscases_deep can be solved
     """
     import numpy as np
-    from crpm.setup_periodiccases import setup_periodiccases_deep
+    from crpm.setup_toruscases import setup_toruscases_deep
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.gradientdecent import gradientdecent
+    from crpm.analyzebinaryclassifier import analyzebinaryclassifier
 
     #init numpy seed
     np.random.seed(40017)
 
     #setup model
-    model, data = setup_periodiccases_deep()
+    model, data = setup_toruscases_deep()
     nx = data.shape[0]
     nsample = data.shape[1]
 
@@ -148,10 +174,30 @@ def test_solve_periodiccases_deep_bce():
     pred, _ = fwdprop(train, model)
     icost, _ = loss("bce", pred, targets)
 
+    #analyze binary classifier
+    pred, _ = fwdprop(valid, model)
+    roc, ireport = analyzebinaryclassifier(pred, validtargets)
+    if ireport["AreaUnderCurve"]<.5:
+        pred = 1-pred
+        icost, _ = loss("bce", pred, validtargets)
+        roc, ireport = analyzebinaryclassifier(pred, validtargets)
+    print(ireport)
+    #plotroc(roc)
+
     #train model
     pred, cost, _ = gradientdecent(model, train, targets, "bce", valid, validtargets, earlystop=True)
 
-    print(model)
+    #analyze binary classifier
+    pred, _ = fwdprop(valid, model)
+    roc, report = analyzebinaryclassifier(pred, validtargets)
+    if report["AreaUnderCurve"]<.5:
+        pred = 1-pred
+        cost, _ = loss("bce", pred, validtargets)
+        roc, report = analyzebinaryclassifier(pred, validtargets)
+    print(report)
+    #plotroc(roc)
+
+    #print(model)
     print(icost)
     print(cost)
 
@@ -160,3 +206,63 @@ def test_solve_periodiccases_deep_bce():
 
     #assert cost is less than 1.7
     assert cost < 1.7
+
+    assert report["AreaUnderCurve"] > ireport["AreaUnderCurve"]
+    assert report["AreaUnderCurve"] > .8
+
+
+def test_classify_spectra2():
+    """test spectra2 can find two groups
+    """
+
+    import numpy as np
+    from crpm.setup_spectra2 import setup_spectra2
+    from crpm.dynamics import computecost
+    from crpm.gradientdecent import gradientdecent
+    from crpm.analyzebinaryclassifier import analyzebinaryclassifier
+
+    #init numpy seed
+    np.random.seed(40017)
+
+    #setup model
+    discriminator, data = setup_spectra2()
+
+    #partition data (labels on first row)
+    nobv = data.shape[1]
+    cutoff = 2*nobv//3
+    target = data[0, :cutoff]
+    train = data[1:, :cutoff]
+    vtarget = data[0, cutoff:]
+    valid = data[1:, cutoff:]
+
+    #analyze untrained discriminator
+    pred, icost = computecost(discriminator, valid, vtarget, "bce")
+    roc, ireport = analyzebinaryclassifier(pred, vtarget)
+    if ireport["AreaUnderCurve"]<.5:
+        #flip labels
+        pred, icost = computecost(discriminator, valid, 1-vtarget, "bce")
+        roc, ireport = analyzebinaryclassifier(pred, 1-vtarget)
+    print(ireport)
+    #plotroc(roc)
+
+    #train discriminator
+    pred, cost, _ = gradientdecent(discriminator, train, target, "bce",
+                                   valid, vtarget,
+                                   earlystop=True,
+                                   finetune=7)
+
+    #analyze discriminator
+    print("analyze trained discriminator to iden subtype")
+    pred, cost = computecost(discriminator, valid, vtarget, "bce")
+    roc, report = analyzebinaryclassifier(pred, vtarget)
+    if report["AreaUnderCurve"]<.5:
+        #flip labels
+        pred, cost = computecost(discriminator, valid, 1-vtarget, "bce")
+        roc, report = analyzebinaryclassifier(pred, 1-vtarget)
+    print(report)
+    #plotroc(roc)
+
+    #assert discriminator can be trained by binary cross entropy error
+    assert icost > cost
+    assert report["AreaUnderCurve"] > ireport["AreaUnderCurve"]
+    assert report["AreaUnderCurve"] > .8
