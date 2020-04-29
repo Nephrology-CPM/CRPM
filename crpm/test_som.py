@@ -38,7 +38,7 @@ def test_som1d_init_pca():
     #assert node points have no (little) y component
     assert(np.var(map[-1]["weight"][:,1]) < 0.1)
 
-def test_som2d_init_pca():
+def r_test_som2d_init_pca():
     """test inital node coordinates for 2D SOM follow known PCA for nested Cs data.
 
     We know for Nested Cs data - first 2 PCs point roughly in x and y directions

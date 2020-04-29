@@ -93,7 +93,7 @@ def test_encode_periodiccases_deep():
     #assert learning is taking place
     assert icost > cost
 
-def test_encode_spectra2():
+def r_test_encode_spectra2():
     """test spectra2 can be encoded
     """
 
