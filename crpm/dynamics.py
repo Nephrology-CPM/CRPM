@@ -17,13 +17,20 @@ def computeforces(model, data, targets, lossname):
 
         #body fwd prop
         pred, state = fwdprop(pred, model.body)
+        logit = state[-1]["stimulus"]
+        activation = model.body[-1]["activation"]
 
         #post fwd prop if any
         if model.post is not None:
             pred, poststate = fwdprop(pred, model.post)
+            logit = poststate[-1]["stimulus"]
+            activation = model.post[-1]["activation"]
 
+        #turn off from-logit if final layer was not logit and loss name is not bce
+        if not(activation == "logit" and lossname == "bce"):
+            logit = None
         #get derivative of loss function
-        _, dloss = loss(lossname, pred, targets)
+        _, dloss = loss(lossname, pred, targets, logit)
 
         #post back prop if any
         if model.post is not None:
@@ -37,7 +44,10 @@ def computeforces(model, data, targets, lossname):
 
     #If not FFN object then simply return body forces
     pred, state = fwdprop(data, model)
-    _, dloss = loss(lossname, pred, targets)
+    #turn off from-logit if final layer was not logit with bce lossfunction
+    if not(model[-1]["activation"] == "logit" and lossname == "bce"):
+            logit = None
+    _, dloss = loss(lossname, pred, targets, logit)
     forces, _ = backprop(model, state, dloss)
     return forces
 
