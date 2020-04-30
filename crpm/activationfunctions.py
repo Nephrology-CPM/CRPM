@@ -36,6 +36,7 @@ def dactivation(name, stimulus):
         return drelu(stimulus)
     if name == "softmax":
         return dsoftmax(stimulus)
+    print("WARNING - unknown dactivation function: " +name)
     return vacuum(stimulus)
 
 #----------------------------------------------------

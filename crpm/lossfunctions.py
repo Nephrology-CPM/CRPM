@@ -2,11 +2,11 @@
 """
 import numpy as np
 
-def loss(name, pred, target):
+def loss(name, pred, target, logit=None):
     """returns result of loss function given name and predictions and targets
     """
     if name == "bce":
-        return bce(pred, target)
+        return bce(pred, target, logit)
     if name == "mse":
         return mse(pred, target)
     if name == "upmse":
@@ -17,14 +17,27 @@ def loss(name, pred, target):
     return mse(pred, target)
 #----------------------------------------------------
 
-def bce(pred, target):
+def bce(pred, target, logit=None):
     """Binary cross entropy error function
+        Will calcualate bce from top layer logit directly when logit is provided.
+        Assumes logit provided is to a logisitc top layer.
     """
-    pred1 = np.subtract(1, pred)
-    logpred = np.log(pred)
-    logpred1 = np.log(pred1)
-    dloss = np.where(target == 1, np.divide(-1, pred), np.divide(1, pred1))
-    cost = np.where(target == 1, logpred, logpred1).mean()
+    if logit is None:
+        #limit predictions
+        pred = np.where(pred>=1, 1-np.finfo(float).eps, pred)
+        pred = np.where(pred<=0, np.finfo(float).eps, pred)
+
+        pred1 = np.subtract(1, pred)
+        logpred = np.log(pred)
+        logpred1 = np.log(pred1)
+        dloss = np.where(target == 1, np.divide(-1, pred), np.divide(1, pred1))
+        cost = np.where(target == 1, logpred, logpred1).mean()
+    else:
+        dloss = np.where(target == 1, -np.exp(-logit)-1, np.exp(logit)+1)
+        cost = np.where(logit < 0,
+                        -np.log(1+np.exp(logit))*(target*(logit+1)+(1-target)),
+                        -np.log(1+np.exp(-logit))*(target+(1-target)*(1-logit)))
+        cost = cost.mean()
     return -cost, dloss
 
 #----------------------------------------------------
