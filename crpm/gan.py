@@ -52,6 +52,16 @@ def gan(generator, discriminator, data, maxepoch=500, batchsize=10, finetune=6):
         print("Warning: number of nodes in generator ouptut layer should be " +
               "equal to number of rows in data.")
         return None
+    #check generator has linear or logistic input
+    if (generator[0]["activation"] != "linear" and
+        generator[0]["activation"] != "logistic"):
+        print("Warning: generator must have linear or logistic input.")
+        return None
+    #check discriminator penultimate layer has same size and activation as generator input layer
+    if (discriminator[-2]["activation"] != generator[0]["activation"] or
+        discriminator[-2]["n"] != generator[0]["n"]):
+        print("Warning: discriminator penultimate layer must match generator input layer.")
+        return None
     #check for positive number of training steps
     if isnotpositiveint(maxepoch):
         #throw error msg and return nothing
@@ -102,8 +112,14 @@ def gan(generator, discriminator, data, maxepoch=500, batchsize=10, finetune=6):
 
         #select mini batch from data
         sel = np.random.choice(nobv, size=minibatch, replace=False)
+
         #sample mini batch of noise
-        noise = np.random.rand(ncode, minibatch)
+        if(generator[0]["activation"]=="linear"):
+            #sample gaussian distribution
+            noise = np.random.randn(ncode, minibatch)
+        if(generator[0]["activation"]=="logistic"):
+            #sample uniform distribution
+            noise = np.random.rand(ncode, minibatch)
 
         # - - Train discriminator to detect real data:
         #     increase TPR (decr T1err)
