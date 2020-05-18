@@ -1,6 +1,7 @@
 """FNN backpropagation scheme
 
-TODO: have independent regularization terms for weights and biases
+TODO: have layers compute their own forces and have this function simply return
+        the forces list.
 
 """
 
@@ -49,6 +50,8 @@ def backprop(body, state, dloss):
     for layer in reversed(body[1:]):
         index = layer["layer"]
 
+        #---- for fully connected layers ----
+
         #calculate layer derivative w.r.t. stimulus using dact of layer above
         dstim = dact * dactivation(layer["activation"], state[index]["stimulus"])
         #calculate layer derivative w.r.t. weight using dstim
@@ -73,4 +76,7 @@ def backprop(body, state, dloss):
                           "fbias":-dbias
                       }
                      )
+
+        # --- for batchnorm layers ---
+
     return forces, dact
