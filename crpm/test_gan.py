@@ -156,8 +156,8 @@ def r_test_spectra2():
 
     #-- Start GAN training---
 
-    ganerr = gan(generator, discriminator, train,
-                       maxepoch=20000, batchsize=50, finetune=6.3)
+    ganerr = gan(generator, discriminator, train, valid,
+                 maxepoch=20000, batchsize=50, finetune=6.3)
 
     #assert generator fools discriminator at least some of the time bce<80%.
     assert ganerr[-1,1] <.8
@@ -186,10 +186,10 @@ def r_test_spectra2():
 def test_afnetwork():
     """test AF network patients can be encoded and generated
     """
-    #import matplotlib
-    #matplotlib.use('TkAgg')
-    #import matplotlib.pyplot as plt
-    #import matplotlib.patches as mpatches
+    import matplotlib
+    matplotlib.use('TkAgg')
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
 
     import numpy as np
     from crpm.setup_afmodel import setup_afmodel
@@ -288,40 +288,40 @@ def test_afnetwork():
     #-- Main GAN training---
     #ganerr = gan(generator, discriminator, train,
     #                   maxepoch=100000, batchsize=1, finetune=6)
-    ganerr = gan(generator, discriminator, train,
+    ganerr = gan(generator, discriminator, train, valid,
                        maxepoch=100000, batchsize=1, finetune=6)
 
-    #def moving_average(a, n=3) :
-    #    ret = np.cumsum(a, dtype=float)
-    #    ret[n:] = ret[n:] - ret[:-n]
-    #    return ret[n - 1:] / n
+    def moving_average(a, n=3) :
+        ret = np.cumsum(a, dtype=float)
+        ret[n:] = ret[n:] - ret[:-n]
+        return ret[n - 1:] / n
 
-    #ganerr[:,2] = np.log(ganerr[:,2]) #plot density error on logscale
-    #discerrbar = moving_average(ganerr[:, 0], n=20)
-    #generrbar = moving_average(ganerr[:, 1], n=20)
-    #autoerrbar = moving_average(ganerr[:, 2], n=20)
+    ganerr[:,2] = np.log(ganerr[:,2]) #plot density error on logscale
+    discerrbar = moving_average(ganerr[:, 0], n=20)
+    generrbar = moving_average(ganerr[:, 1], n=20)
+    autoerrbar = moving_average(ganerr[:, 2], n=20)
 
     #assert generator fools discriminator at least some of the time bce<65%.
     print(ganerr[-1,1])
     assert ganerr[-1,1] <.65
 
     #fig = plt.figure()
-    #plt.plot(ganerr[:, 0], ganerr[:, 1])
-    #plt.plot(discerrbar, generrbar)
-    #plt.plot(discerrbar[0], generrbar[0], marker="D", color="green", markersize=10)
-    #plt.plot(discerrbar[-1], generrbar[-1], marker="8", color="red", markersize=10)
-    #plt.xlabel("discriminator error")
-    #plt.ylabel("generator error")
-    #plt.show()
+    plt.plot(ganerr[:, 0], ganerr[:, 1])
+    plt.plot(discerrbar, generrbar)
+    plt.plot(discerrbar[0], generrbar[0], marker="D", color="green", markersize=10)
+    plt.plot(discerrbar[-1], generrbar[-1], marker="8", color="red", markersize=10)
+    plt.xlabel("discriminator error")
+    plt.ylabel("generator error")
+    plt.show()
 
     #fig = plt.figure()
-    #plt.plot(ganerr[:, 0], ganerr[:, 2])
-    #plt.plot(discerrbar, autoerrbar)
-    #plt.plot(discerrbar[0], autoerrbar[0], marker="D", color="green", markersize=10)
-    #plt.plot(discerrbar[-1], autoerrbar[-1], marker="8", color="red", markersize=10)
-    #plt.xlabel("discriminator error")
-    #plt.ylabel("encoder error")
-    #plt.show()
+    plt.plot(ganerr[:, 0], ganerr[:, 2])
+    plt.plot(discerrbar, autoerrbar)
+    plt.plot(discerrbar[0], autoerrbar[0], marker="D", color="green", markersize=10)
+    plt.plot(discerrbar[-1], autoerrbar[-1], marker="8", color="red", markersize=10)
+    plt.xlabel("discriminator error")
+    plt.ylabel("encoder error")
+    plt.show()
 
     #generate fake data for every training sample
     nsample = train.shape[1]
@@ -358,28 +358,30 @@ def test_afnetwork():
     #plotroc(roc)
 
     #assert discriminator has poor potential to iden fake data
-    assert reportv["AreaUnderCurve"] <.55
+    #assert reportv["AreaUnderCurve"] <.55
 
     #get fake data the discriminator thinks is real
     pred, _ = fwdprop(fake, discriminator)
     spoof = fake[:, pred[0, :] > report["OptimalThreshold"]]
 
     #plot metabolite distributions
-    #labels = []
-    #def add_label(violin, label):
-    #    color = violin["bodies"][0].get_facecolor().flatten()
-    #    labels.append((mpatches.Patch(color=color), label))
+    labels = []
+    def add_label(violin, label):
+        color = violin["bodies"][0].get_facecolor().flatten()
+        labels.append((mpatches.Patch(color=color), label))
 
-    #add_label(plt.violinplot(train.T), "Training")
+    add_label(plt.violinplot(train.T), "Training")
     #add_label(plt.violinplot(valid.T), "Validation")
-    #add_label(plt.violinplot(fake.T), "Simulated")
+    add_label(plt.violinplot(fake.T), "Simulated")
     #add_label(plt.violinplot(spoof.T), "Spoofed")
 
-    #plt.legend(*zip(*labels))
+    plt.legend(*zip(*labels))
 
 
     #viplt1, = plt.violinplot(train.T)
     #plt.violinplot(valid.T)
     #plt.violinplot(fake.T)
     #plt.legend(labels=["training", "validation", "simulated"])
-    #plt.show()
+    plt.show()
+
+    assert False
