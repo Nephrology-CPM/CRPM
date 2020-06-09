@@ -159,8 +159,8 @@ def r_test_spectra2():
     ganerr = gan(generator, discriminator, train, valid,
                  maxepoch=20000, batchsize=50, finetune=6.3)
 
-    #assert generator fools discriminator at least some of the time bce<80%.
-    assert ganerr[-1,1] <.8
+    #assert generator fools discriminator at least 40% of the time.
+    assert ganerr[-1,1] <-log(.40)
 
     #def moving_average(a, n=3) :
     #    ret = np.cumsum(a, dtype=float)
@@ -181,7 +181,7 @@ def r_test_spectra2():
     #print(report)
     #plotroc(roc)
 
-    assert False
+    #assert False
 
 def test_afnetwork():
     """test AF network patients can be encoded and generated
@@ -301,9 +301,9 @@ def test_afnetwork():
     generrbar = moving_average(ganerr[:, 1], n=20)
     autoerrbar = moving_average(ganerr[:, 2], n=20)
 
-    #assert generator fools discriminator at least some of the time bce<65%.
+    #assert generator fools discriminator at least 40% of the time.
     print(ganerr[-1,1])
-    assert ganerr[-1,1] <.65
+    assert ganerr[-1,1] <-log(.40)
 
     #fig = plt.figure()
     #plt.plot(ganerr[:, 0], ganerr[:, 1])
