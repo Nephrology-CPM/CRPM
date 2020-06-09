@@ -186,10 +186,10 @@ def r_test_spectra2():
 def test_afnetwork():
     """test AF network patients can be encoded and generated
     """
-    import matplotlib
-    matplotlib.use('TkAgg')
-    import matplotlib.pyplot as plt
-    import matplotlib.patches as mpatches
+    #import matplotlib
+    #matplotlib.use('TkAgg')
+    #import matplotlib.pyplot as plt
+    #import matplotlib.patches as mpatches
 
     import numpy as np
     from crpm.setup_afmodel import setup_afmodel
@@ -306,22 +306,22 @@ def test_afnetwork():
     assert ganerr[-1,1] <.65
 
     #fig = plt.figure()
-    plt.plot(ganerr[:, 0], ganerr[:, 1])
-    plt.plot(discerrbar, generrbar)
-    plt.plot(discerrbar[0], generrbar[0], marker="D", color="green", markersize=10)
-    plt.plot(discerrbar[-1], generrbar[-1], marker="8", color="red", markersize=10)
-    plt.xlabel("discriminator error")
-    plt.ylabel("generator error")
-    plt.show()
+    #plt.plot(ganerr[:, 0], ganerr[:, 1])
+    #plt.plot(discerrbar, generrbar)
+    #plt.plot(discerrbar[0], generrbar[0], marker="D", color="green", markersize=10)
+    #plt.plot(discerrbar[-1], generrbar[-1], marker="8", color="red", markersize=10)
+    #plt.xlabel("discriminator error")
+    #plt.ylabel("generator error")
+    #plt.show()
 
     #fig = plt.figure()
-    plt.plot(ganerr[:, 0], ganerr[:, 2])
-    plt.plot(discerrbar, autoerrbar)
-    plt.plot(discerrbar[0], autoerrbar[0], marker="D", color="green", markersize=10)
-    plt.plot(discerrbar[-1], autoerrbar[-1], marker="8", color="red", markersize=10)
-    plt.xlabel("discriminator error")
-    plt.ylabel("encoder error")
-    plt.show()
+    #plt.plot(ganerr[:, 0], ganerr[:, 2])
+    #plt.plot(discerrbar, autoerrbar)
+    #plt.plot(discerrbar[0], autoerrbar[0], marker="D", color="green", markersize=10)
+    #plt.plot(discerrbar[-1], autoerrbar[-1], marker="8", color="red", markersize=10)
+    #plt.xlabel("discriminator error")
+    #plt.ylabel("encoder error")
+    #plt.show()
 
     #generate fake data for every training sample
     nsample = train.shape[1]
@@ -370,18 +370,14 @@ def test_afnetwork():
         color = violin["bodies"][0].get_facecolor().flatten()
         labels.append((mpatches.Patch(color=color), label))
 
-    add_label(plt.violinplot(train.T), "Training")
-    #add_label(plt.violinplot(valid.T), "Validation")
-    add_label(plt.violinplot(fake.T), "Simulated")
-    #add_label(plt.violinplot(spoof.T), "Spoofed")
+    #add_label(plt.violinplot(train.T), "Training")
+    ##add_label(plt.violinplot(valid.T), "Validation")
+    #add_label(plt.violinplot(fake.T), "Simulated")
+    ##add_label(plt.violinplot(spoof.T), "Spoofed")
 
-    plt.legend(*zip(*labels))
+    #plt.legend(*zip(*labels))
 
 
-    #viplt1, = plt.violinplot(train.T)
-    #plt.violinplot(valid.T)
-    #plt.violinplot(fake.T)
-    #plt.legend(labels=["training", "validation", "simulated"])
-    plt.show()
+    #plt.show()
 
-    assert False
+    #assert False
