@@ -160,7 +160,7 @@ def r_test_spectra2():
                  maxepoch=20000, batchsize=50, finetune=6.3)
 
     #assert generator fools discriminator at least 40% of the time.
-    assert ganerr[-1,1] <-log(.40)
+    assert ganerr[-1,1] <-np.log(.40)
 
     #def moving_average(a, n=3) :
     #    ret = np.cumsum(a, dtype=float)
@@ -303,7 +303,7 @@ def test_afnetwork():
 
     #assert generator fools discriminator at least 40% of the time.
     print(ganerr[-1,1])
-    assert ganerr[-1,1] <-log(.40)
+    assert ganerr[-1,1] <-np.log(.40)
 
     #fig = plt.figure()
     #plt.plot(ganerr[:, 0], ganerr[:, 1])

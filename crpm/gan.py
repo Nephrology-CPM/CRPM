@@ -106,7 +106,7 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
     else:
         nadj = maxepoch
 
-    #init ganerr record for discriminator bce, generator bce, encoder mse, and epoch
+    #init ganerr record for True Positive logodds, False Negative logodds, recon mse, and epoch
     ganerr = np.empty((nout+1, 4))
 
     #img noise decay
@@ -298,12 +298,11 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             recon, genstate = fwdprop(latent, generator)
             vautoerr, _ = loss("mse", recon, valid)
 
-            #calc disc error on validation set
-            pred, discstate = fwdprop(np.hstack((valid, fake)), discriminator)
-            vderr, _ = loss("bce", pred, np.hstack((np.repeat(1, nvalid),
-                                                    np.repeat(0, nvalid))))
+            #calc disc error on validation set (True Positive Rate)
+            pred, discstate = fwdprop(valid, discriminator)
+            vderr, _ = loss("bce", pred, np.repeat(1, nvalid))
 
-            #calc gen error on validation set
+            #calc gen error on fake set (False Positive Rate)
             pred, discstate = fwdprop(fake, discriminator)
             vgerr, _ = loss("bce", pred, np.repeat(1, nvalid))
 
