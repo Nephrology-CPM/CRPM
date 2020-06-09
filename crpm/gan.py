@@ -195,7 +195,7 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
         forces, _ = backprop(generator, genstate, dloss)
 
         #normalize learning rate alpha based on current forces
-        alpha = alpha_norm * maxforce(generator, forces)
+        alpha = alpha_norm * maxforce(generator, forces) * .25
 
         #update decoder weights and biases
         for layer in forces:
