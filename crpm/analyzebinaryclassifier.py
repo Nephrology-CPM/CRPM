@@ -169,7 +169,7 @@ def analyzebinaryclassifier(pred, targets):
     return roc, report
 
 
-def plotroc(roc):
+def plotroc(roc, file=None):
     """ utility for visulaizing roc returned by analyzebinaryclassifier
     """
     import matplotlib
@@ -177,6 +177,7 @@ def plotroc(roc):
     import matplotlib.pyplot as plt
     import numpy as np
 
+    plt.figure()
     def abline(slope, intercept):
         """Plot a line from slope and intercept"""
         axes = plt.gca()
@@ -186,4 +187,7 @@ def plotroc(roc):
 
     plt.scatter(*zip(*roc))
     abline(1,0)
-    plt.show()
+    if(file is None):
+        plt.show()
+        return
+    plt.savefig(file, format="svg", transparent=True)
