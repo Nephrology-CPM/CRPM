@@ -29,12 +29,10 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
     from crpm.dynamics import maxforce
     from crpm.ffn_bodyplan import copy_ffn
 
-    #get data dimensions
-    nfeat = data.shape[0]
-    nobv = data.shape[1]
-
-    #partition traing data if no validation data is provided
+    #partition training data if no validation data is provided
     if valid is None:
+        #get number of training samples
+        nobv = data.shape[1]
         #throw error and exit if 25% of observations is less than 5
         if nobv//4 < 5:
             print("Data must contain at least 20 observations.")
@@ -96,10 +94,8 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
 
     #-- Start GAN training---
 
-    #save only 5k-10k points
-    #nadj = 1
+    #set output frequency
     delay = 0
-    #nout = 5000
     if(maxepoch>nout):
         nadj = maxepoch//nout
         delay = maxepoch%nadj
@@ -110,19 +106,12 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
     ganerr = np.empty((nout+1, 4))
 
     #img noise decay
-    sigma_fac = .1
+    sigma_fac = 0#.1
     sigma_decay = sigma_fac/nout #linear decay
-    #sigma_decay = .9986 #exponential decay
 
     #label smoothing decay
-    lsmooth = .7
+    lsmooth = 1#.7
     lsmooth_rate = (1-lsmooth)/nout
-
-    #init best disc and gen models
-    #best_discriminator = copy_ffn(discriminator)
-    #best_generator = copy_ffn(generator)
-    #besterr = None
-    #bestbuffer = None
 
     #correct minibatch size if larger than number of observations in data
     minibatch = min(batchsize, nobv)
@@ -132,11 +121,6 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
 
     #get number of generator encoding nodes
     ncode = generator[0]["n"]
-
-    ##select initial 1/2 batch from data
-    #sel = np.random.choice(nobv, size=minibatch, replace=False)
-    ##sample initial 1/2 batch of noise
-    #noise = np.random.rand(ncode, minibatch)
 
     #loop over epochs
     for epoch in range(maxepoch+1):
@@ -179,25 +163,31 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             discriminator[index]["bias"] = (discriminator[index]["bias"] +
                                             alpha * layer["fbias"])
 
-        # - - Train generator to reproduce discriminator latent representation:
-        #     autoencoding to increase FNR? (incr T2err?)
-        #     should improve mode collapse
+        # - - Train generator to fool discriminator:
+        #     increase FPR (incr T1err)
 
-        #fwd prop encoder(discriminator upto penultimate layer) state
-        latent, encstate = fwdprop(data[:, sel], discriminator[:-1])
-        #fwd prop decoder(generator) state
-        recon, genstate = fwdprop(latent, generator)
+        # generate fake data
+        fake, genstate = fwdprop(noise, generator)
 
-        #compute autoencoder reconstruction error
-        autoerr, dloss = loss("mse", recon, data[:, sel])
+        # compute discriminator state due to fake data
+        pred, discstate = fwdprop(fake+fkimgnoise, discriminator)
 
-        #compute forces on decoder(generator)
-        forces, _ = backprop(generator, genstate, dloss)
+        # calculate derivative of missclassification error
+        #gerr, dloss = loss("bce", pred, np.repeat(1, minibatch))
+        gerr, dloss = loss("bce", pred,
+                           np.repeat(1, minibatch),
+                           logit=discstate[-1]["stimulus"])
 
-        #normalize learning rate alpha based on current forces
-        alpha = alpha_norm * maxforce(generator, forces) * .25
+        # back prop gradient on generator coming from disccr missclassification
+        _, dact = backprop(discriminator, discstate, dloss)
 
-        #update decoder weights and biases
+        # get forces on generator
+        forces, _ = backprop(generator, genstate, dact)
+
+        # normalize learning rate alpha based on current forces
+        alpha = alpha_norm * maxforce(generator, forces) / 4
+
+        # update body weights and biases
         for layer in forces:
             index = layer["layer"]
             generator[index]["weight"] = (generator[index]["weight"] +
@@ -230,53 +220,31 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             discriminator[index]["bias"] = (discriminator[index]["bias"] +
                                             alpha * layer["fbias"])
 
-        # - - Train generator to fool discriminator:
-        #     increase FPR (incr T1err)
+        # - - Train generator to reproduce discriminator latent representation:
+        #     autoencoding to increase FNR? (incr T2err?)
+        #     should improve mode collapse
 
-        # compute discriminator state due to fake data
-        pred, discstate = fwdprop(fake+fkimgnoise, discriminator)
+        #fwd prop encoder(discriminator upto penultimate layer) state
+        latent, encstate = fwdprop(data[:, sel], discriminator[:-1])
+        #fwd prop decoder(generator) state
+        recon, genstate = fwdprop(latent, generator)
 
-        # calculate derivative of missclassification error
-        #gerr, dloss = loss("bce", pred, np.repeat(1, minibatch))
-        gerr, dloss = loss("bce", pred,
-                           np.repeat(1, minibatch),
-                           logit=discstate[-1]["stimulus"])
+        #compute autoencoder reconstruction error
+        autoerr, dloss = loss("mse", recon, data[:, sel])
 
-        # back prop gradient on generator coming from disccr missclassification
-        _, dact = backprop(discriminator, discstate, dloss)
+        #compute forces on decoder(generator)
+        forces, _ = backprop(generator, genstate, dloss)
 
-        # get forces on generator
-        forces, _ = backprop(generator, genstate, dact)
+        #normalize learning rate alpha based on current forces
+        alpha = alpha_norm * maxforce(generator, forces) / 2
 
-        # normalize learning rate alpha based on current forces
-        alpha = alpha_norm * maxforce(generator, forces) * .25
-
-        # update body weights and biases
+        #update decoder weights and biases
         for layer in forces:
             index = layer["layer"]
             generator[index]["weight"] = (generator[index]["weight"] +
                                           alpha * layer["fweight"])
             generator[index]["bias"] = (generator[index]["bias"] +
                                         alpha * layer["fbias"])
-
-        #save best autoencoding discriminator-generator pair
-        #if besterr is None:
-        #    besterr = np.copy(autoerr)
-        #if autoerr < besterr:
-        #    print(str(autoerr)+": new best mini-batch recon error at step = "+str(epoch))
-        #    besterr = np.copy(autoerr)
-        #    best_discriminator = copy_ffn(discriminator)
-        #    best_generator = copy_ffn(generator)
-
-        #save best errors this book keeping block
-        #if bestbuffer is None:
-        #    bestbuffer = np.copy(autoerr)
-        #    buffer_derr = np.copy(derr)
-        #    buffer_gerr = np.copy(gerr)
-        #if autoerr < bestbuffer:
-        #    bestbuffer = np.copy(autoerr)
-        #    buffer_derr = np.copy(derr)
-        #    buffer_gerr = np.copy(gerr)
 
         #book keeping
         idx = epoch-delay
@@ -308,12 +276,9 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
 
             #save learning error
             ganerr[idx//nadj, :] = [vderr, vgerr, vautoerr, epoch]
-            print(str(epoch) + ": " + str(vautoerr))
-            #ganerr[idx//nadj, :] = [derr, gerr, autoerr, epoch]
-            #ganerr[idx//nadj, :] = [buffer_derr, buffer_gerr, bestbuffer, epoch]
-
-            #reset best buffer error
-            #bestbuffer = None
+            print(str(epoch) + ": " +
+                  str(np.exp(-vderr)/np.exp(-vgerr)) + ": " +
+                  str(np.log(vautoerr)))
 
             #adjust noise factor
             sigma_fac -= sigma_decay
@@ -321,8 +286,4 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             #adjust label smoothing
             lsmooth += lsmooth_rate
 
-    #Overwrite discriminator and generator
-    #discriminator = copy_ffn(best_discriminator)
-    #generator = copy_ffn(best_generator)
-
-    return ganerr#, generator, discriminator
+    return ganerr
