@@ -2,7 +2,7 @@
 """
 
 def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
-        batchsize=10, finetune=6):
+        batchsize=10, finetune=6, sigma0=0, label0=1):
     """ Trains generative adversarial network by semi gradientdecent.
         Args:
             data: training data with features in rows and observations in columns
@@ -106,11 +106,11 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
     ganerr = np.empty((nout+1, 4))
 
     #img noise decay
-    sigma_fac = 0#.1
+    sigma_fac = sigma0
     sigma_decay = sigma_fac/nout #linear decay
 
     #label smoothing decay
-    lsmooth = 1#.7
+    lsmooth = label0
     lsmooth_rate = (1-lsmooth)/nout
 
     #correct minibatch size if larger than number of observations in data
@@ -163,31 +163,25 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             discriminator[index]["bias"] = (discriminator[index]["bias"] +
                                             alpha * layer["fbias"])
 
-        # - - Train generator to fool discriminator:
-        #     increase FPR (incr T1err)
+        # - - Train generator to reproduce discriminator latent representation:
+        #     autoencoding to increase FNR? (incr T2err?)
+        #     should improve mode collapse
 
-        # generate fake data
-        fake, genstate = fwdprop(noise, generator)
+        #fwd prop encoder(discriminator upto penultimate layer) state
+        latent, encstate = fwdprop(data[:, sel], discriminator[:-1])
+        #fwd prop decoder(generator) state
+        recon, genstate = fwdprop(latent, generator)
 
-        # compute discriminator state due to fake data
-        pred, discstate = fwdprop(fake+fkimgnoise, discriminator)
+        #compute autoencoder reconstruction error
+        autoerr, dloss = loss("mse", recon, data[:, sel])
 
-        # calculate derivative of missclassification error
-        #gerr, dloss = loss("bce", pred, np.repeat(1, minibatch))
-        gerr, dloss = loss("bce", pred,
-                           np.repeat(1, minibatch),
-                           logit=discstate[-1]["stimulus"])
+        #compute forces on decoder(generator)
+        forces, _ = backprop(generator, genstate, dloss)
 
-        # back prop gradient on generator coming from disccr missclassification
-        _, dact = backprop(discriminator, discstate, dloss)
-
-        # get forces on generator
-        forces, _ = backprop(generator, genstate, dact)
-
-        # normalize learning rate alpha based on current forces
+        #normalize learning rate alpha based on current forces
         alpha = alpha_norm * maxforce(generator, forces) / 4
 
-        # update body weights and biases
+        #update decoder weights and biases
         for layer in forces:
             index = layer["layer"]
             generator[index]["weight"] = (generator[index]["weight"] +
@@ -220,31 +214,40 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             discriminator[index]["bias"] = (discriminator[index]["bias"] +
                                             alpha * layer["fbias"])
 
-        # - - Train generator to reproduce discriminator latent representation:
-        #     autoencoding to increase FNR? (incr T2err?)
-        #     should improve mode collapse
+        # - - Train generator to fool discriminator:
+        #     increase FPR (incr T1err)
 
-        #fwd prop encoder(discriminator upto penultimate layer) state
-        latent, encstate = fwdprop(data[:, sel], discriminator[:-1])
-        #fwd prop decoder(generator) state
-        recon, genstate = fwdprop(latent, generator)
+        # generate fake data
+        fake, genstate = fwdprop(noise, generator)
 
-        #compute autoencoder reconstruction error
-        autoerr, dloss = loss("mse", recon, data[:, sel])
+        # compute discriminator state due to fake data
+        pred, discstate = fwdprop(fake+fkimgnoise, discriminator)
 
-        #compute forces on decoder(generator)
-        forces, _ = backprop(generator, genstate, dloss)
+        # calculate derivative of missclassification error
+        #gerr, dloss = loss("bce", pred, np.repeat(1, minibatch))
+        gerr, dloss = loss("bce", pred,
+                           np.repeat(1, minibatch),
+                           logit=discstate[-1]["stimulus"])
 
-        #normalize learning rate alpha based on current forces
+        # back prop gradient on generator coming from disccr missclassification
+        _, dact = backprop(discriminator, discstate, dloss)
+
+        # get forces on generator
+        forces, _ = backprop(generator, genstate, dact)
+
+        # normalize learning rate alpha based on current forces
         alpha = alpha_norm * maxforce(generator, forces) / 4
 
-        #update decoder weights and biases
+        # update body weights and biases
         for layer in forces:
             index = layer["layer"]
             generator[index]["weight"] = (generator[index]["weight"] +
                                           alpha * layer["fweight"])
             generator[index]["bias"] = (generator[index]["bias"] +
                                         alpha * layer["fbias"])
+
+        # - - Periodic Validation:
+        # adjust label smoothing and image noise factors
 
         #book keeping
         idx = epoch-delay
