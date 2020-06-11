@@ -280,6 +280,7 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             #save learning error
             ganerr[idx//nadj, :] = [vderr, vgerr, vautoerr, epoch]
             print(str(epoch) + ": " +
+                  str((np.exp(-2*vderr)+np.exp(-2*vgerr))/2) + ": " +
                   str(np.exp(-vderr)/np.exp(-vgerr)) + ": " +
                   str(np.log(vautoerr)))
 
