@@ -36,7 +36,7 @@ def bce(pred, target, logit=None):
         target1 = np.subtract(1, pred)
         cost = np.where(logit > 0,
                         np.subtract(-np.multiply(target1,logit),
-                                    np.log(1+np.exp(-logit)),
+                                    np.log(1+np.exp(-logit))),
                         np.subtract(np.multiply(target,logit),
                                     np.log(1+np.exp(logit))))
         dloss = np.where(logit > 0,
@@ -45,7 +45,7 @@ def bce(pred, target, logit=None):
                                      (1+np.exp(-logit))),
                          np.multiply(np.subtract(np.divide(target,np.exp(logit)),
                                                  target1),
-                                    (1+np.exp(logit)))
+                                    (1+np.exp(logit))))
 #        dloss = np.where(target == 1, -np.exp(-logit)-1, np.exp(logit)+1)
 #        cost = np.where(logit < 0,
 #                        -np.log(1+np.exp(logit))*(target*(logit+1)+(1-target)),
