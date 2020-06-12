@@ -89,8 +89,8 @@ def init_ffn(bodyplan, weightstd=None):
             "lreg":bodyplan[layer]["lreg"],
             "regval":bodyplan[layer]["regval"],
             "desc": bodyplan[layer]["desc"],
-            "weight": np.random.randn(ncurr, nprev)*weightstd, #random initial weights
-            "bias": np.zeros((ncurr, 1)), # zeros for initial biases
+            #"weight": np.random.randn(ncurr, nprev)*weightstd, #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*np.sqrt(6/nprev), #scaled random initial weights            "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
             })
@@ -164,7 +164,8 @@ def stack_new_layer(model, weightstd=None, n=1, activation='linear',
         "lreg": lreg,
         "regval": regval,
         "desc": desc,
-        "weight": np.random.randn(n, nprev)*weightstd, #random initial weights
+        #"weight": np.random.randn(n, nprev)*weightstd, #random initial weights
+        "weight": np.random.randn(n, nprev)*np.sqrt(6/nprev), #scaled random initial weights
         "bias": np.zeros((n, 1)), # zeros for initial biases
         "weightdot": np.zeros((n, nprev)), #zeros for initial weight momenta
         "biasdot": np.zeros((n, 1)) # zeros for initial bias momenta
