@@ -98,7 +98,8 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
     delay = 0
     if(maxepoch>nout):
         nadj = maxepoch//nout
-        delay = maxepoch%nadj
+        if nadj > 1:
+            delay = maxepoch%nadj
     else:
         nadj = maxepoch
 
