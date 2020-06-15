@@ -101,7 +101,8 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
         if nadj > 1:
             delay = maxepoch%nadj
     else:
-        nadj = maxepoch
+        nadj = 1
+        nout = maxepoch
 
     #init ganerr record for True Positive logodds, False Negative logodds, recon mse, and epoch
     ganerr = np.empty((nout+1, 4))
