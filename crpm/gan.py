@@ -2,7 +2,7 @@
 """
 
 def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
-        batchsize=10, finetune=6, sigma0=0, label0=1):
+        batchsize=10, finetune=6, sigma0=0, label0=1, withdecay= True):
     """ Trains generative adversarial network by semi gradientdecent.
         Args:
             data: training data with features in rows and observations in columns
@@ -284,10 +284,11 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
                   str(np.exp(-vderr)/np.exp(-vgerr)) + ": " +
                   str(np.log(vautoerr)))
 
-            #adjust noise factor
-            sigma_fac -= sigma_decay
-
-            #adjust label smoothing
-            lsmooth += lsmooth_rate
+            #adjust factors if decay is on
+            if withdecay:
+                #adjust noise factor
+                sigma_fac -= sigma_decay
+                #adjust label smoothing
+                lsmooth += lsmooth_rate
 
     return ganerr

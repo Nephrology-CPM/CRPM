@@ -102,7 +102,7 @@ def test_solve_ffn_numberadder():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(4093082899)
 
     #create number adder from file
     model = FFN("crpm/data/numberadder_bodyplan.csv")
@@ -128,7 +128,7 @@ def test_ffn_pre():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(4093082899)
 
     #create an inverter for number adder model input
     inverter= FFN("crpm/data/numberadder_pre_bodyplan.csv")
@@ -161,7 +161,7 @@ def test_ffn_post():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(4093082899)
 
     #create an inverter for number adder model output
     inverter= FFN("crpm/data/numberadder_post_bodyplan.csv")
@@ -194,7 +194,7 @@ def test_ffn_prepost():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(4093082899)
 
     #create an inverter for number adder model input
     preinverter= FFN("crpm/data/numberadder_pre_bodyplan.csv")

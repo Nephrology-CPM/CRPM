@@ -12,6 +12,8 @@ def test_solve_numberadder():
     from crpm.lossfunctions import loss
     from crpm.langevindynamics import langevindynamics
 
+    #init numpy seed
+    np.random.seed(2860486313)
 
     #load data
     __, data = load_dataset("crpm/data/numberadder.csv")
@@ -53,7 +55,7 @@ def test_solve_nestedcs():
     from crpm.langevindynamics import langevindynamics
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(2860486313)
 
     #setup model
     model, data = setup_nestedcs()
@@ -83,7 +85,7 @@ def test_solve_nestedcs_bce():
     from crpm.langevindynamics import langevindynamics
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(2860486313)
 
     #setup model
     model, data = setup_nestedcs()

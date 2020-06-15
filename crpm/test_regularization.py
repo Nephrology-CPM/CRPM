@@ -1,7 +1,7 @@
 """ test regularization on multicorrel_C data
 """
 def test_regval_reduces_uncorrel():
-    """ test that regularization term will reduce the weight assoctiated with
+    """ test that regularization term will reduce the weight assocciated with
     uncorrelated features compared with no regularization. Example function is
     y = 5x1 - x2 + 5x3^2, where features x1, x2, and x3 are indepently sampled from
     normal distribution with zero mean and unit variance."""
@@ -11,7 +11,7 @@ def test_regval_reduces_uncorrel():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(1500450271)
 
     #setup model with no regularization
     model, data = setup_multicorrel()
@@ -51,7 +51,7 @@ def test_regval_reduces_uncorrel():
 
     #manually set regularization term
     model[1]["lreg"] = 2
-    model[1]["regval"] = 4
+    model[1]["regval"] = 10
 
     #train L2 regularized model
     _, _, _ = gradientdecent(model, train, target, "mse", vtrain, vtarget,
@@ -62,11 +62,10 @@ def test_regval_reduces_uncorrel():
 
     assert abs(weight0[0, 2]) > abs(weight1[0, 2])
     assert abs(weight0[0, 2]) > abs(weight2[0, 2])
-    assert abs(weight2[0, 2]) != abs(weight1[0, 2])
 
 def test_regval_reduces_correl():
-    """ test that regularization term will reduce the weight assoctiated with
-    uncorrelated features compared with no regularization. Example function is
+    """ test that regularization term will reduce the weight assocciated with
+    correlated features compared with no regularization. Example function is
     y = x1 - x2 + x3^2, where features x1, x2, and x3 are normaly distributed
     with zero mean and unit variance and features x1 and x2 are correlated with
     value 0.5 while x3 is uncorrelated with both x1 and x2."""
@@ -77,7 +76,7 @@ def test_regval_reduces_correl():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(1500450271)
 
     #setup model with no regularization
     model, data = setup_multicorrel_c()
@@ -203,7 +202,7 @@ def test_regval_reduces_correl():
     #print(alpha2)
 
     assert abs(weight0[0, 2]) > abs(weight1[0, 2])
-    #assert abs(weight0[0, 2]) > abs(weight2[0, 2])
+    assert abs(weight0[0, 2]) > abs(weight2[0, 2])
     assert abs(weight2[0, 2]) != abs(weight1[0, 2])
 
 '''
@@ -222,7 +221,7 @@ def test_calc_regval_dist():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(1500450271)
 
     #setup model
     model, data = setup_multicorrel_c()
@@ -301,7 +300,7 @@ def test_deep_model():
     from crpm.gradientdecent import gradientdecent
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(1500450271)
 
     #setup shallow model
     model, data = setup_multicorrel_c()

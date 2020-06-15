@@ -27,7 +27,7 @@ def r_test_spectra2():
     #import matplotlib.pyplot as plt
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(3628273133)
 
     #setup model
     prototype, data = setup_spectra2()
@@ -210,9 +210,8 @@ def test_afnetwork():
 
     from crpm.gan import gan
 
-
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(3628273133)
 
     #setup model
     prototype, train, target, valid, vtarget = setup_afmodel()

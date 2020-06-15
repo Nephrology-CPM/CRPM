@@ -12,6 +12,9 @@ def test_backprop_numberadder():
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
 
+    #init numpy seed
+    np.random.seed(3267000013)
+
     #create shallow bodyplan for numberadder.csv data
     bodyplan = read_bodyplan("crpm/data/numberadder_bodyplan.csv")
 
@@ -42,6 +45,9 @@ def test_numadd_forcedir():
     from crpm.fwdprop import fwdprop
     from crpm.lossfunctions import loss
     from crpm.backprop import backprop
+
+    #init numpy seed
+    np.random.seed(3267000013)
 
     #create shallow bodyplan for numberadder.csv data
     bodyplan = read_bodyplan("crpm/data/numberadder_bodyplan.csv")

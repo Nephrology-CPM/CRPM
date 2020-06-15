@@ -1,5 +1,5 @@
 layer,n,activation,lreg,regval
 0,3,linear,1,0
-1,5,relu,2,.01
-2,5,relu,2,.01
-3,1,linear,2,.01
+1,5,logistic,1,0
+2,5,logistic,1,0
+3,1,linear,1,0

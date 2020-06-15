@@ -53,6 +53,7 @@ def init_ffn(bodyplan, weightstd=None):
             and "regval". These keys contain the layer index,
             integer number of units in that layer, the name of the
             activation function employed, and the L2 regularization parameter employed respectively.
+        weightstd: an optional array of standard devations for each layer used for weight initialization.
     Returns:
         A list of layers with parameters to be optimized by the learning algorithm
         represetning the current model state.
@@ -61,11 +62,11 @@ def init_ffn(bodyplan, weightstd=None):
     """
     import numpy as np
 
-    #get random initial weight std
-    if weightstd is None:
-        weightstd = init_weight_std
-    #print todo # WARNING:
-    #print("WARNING need to initialize weights with small std ~.01")
+    #ensure weightstd is an array
+    if weightstd is not None:
+        weightstd = np.array(weightstd)
+        if sum(weightstd.shape==0):
+            weightstd = weightstd[np.newaxis]
 
     #init model as list holding data for each layer start with input layer
     model = []
@@ -79,18 +80,21 @@ def init_ffn(bodyplan, weightstd=None):
                 })
 
     # init weights and biases for hidden layers and declare activation function
-    for layer in range(1, len(bodyplan)):
-        ncurr = bodyplan[layer]["n"]
-        nprev = bodyplan[layer-1]["n"]
+    for ilayer in range(1, len(bodyplan)):
+        ncurr = bodyplan[ilayer]["n"]
+        nprev = bodyplan[ilayer-1]["n"]
+        if weightstd is None:
+            weightstd = np.array(6/np.sqrt(nprev))[np.newaxis]
+
         model.append({
-            "layer":layer,
-            "n":bodyplan[layer]['n'],
-            "activation": bodyplan[layer]["activation"],
-            "lreg":bodyplan[layer]["lreg"],
-            "regval":bodyplan[layer]["regval"],
-            "desc": bodyplan[layer]["desc"],
-            #"weight": np.random.randn(ncurr, nprev)*weightstd, #random initial weights
-            "weight": np.random.randn(ncurr, nprev)*np.sqrt(6/nprev), #scaled random initial weights            "bias": np.zeros((ncurr, 1)), # zeros for initial biases
+            "layer":ilayer,
+            "n":bodyplan[ilayer]['n'],
+            "activation": bodyplan[ilayer]["activation"],
+            "lreg":bodyplan[ilayer]["lreg"],
+            "regval":bodyplan[ilayer]["regval"],
+            "desc": bodyplan[ilayer]["desc"],
+            "weight": np.random.randn(ncurr, nprev)*weightstd[ilayer%weightstd.shape[0]], #random initial weights
+            "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
             })
@@ -152,11 +156,14 @@ def stack_new_layer(model, weightstd=None, n=1, activation='linear',
 
     import numpy as np
 
-    #get random initial weight std
-    if weightstd is None:
-        weightstd = init_weight_std
-
+    #get number of units in previous layer
     nprev = model[-1]["n"]
+
+    #get defaut weight standard devation
+    if weightstd is None:
+        weightstd = 6/np.sqrt(nprev)
+
+    #append new layer
     model.append({
         "layer":len(model),
         "n":n,
@@ -164,8 +171,7 @@ def stack_new_layer(model, weightstd=None, n=1, activation='linear',
         "lreg": lreg,
         "regval": regval,
         "desc": desc,
-        #"weight": np.random.randn(n, nprev)*weightstd, #random initial weights
-        "weight": np.random.randn(n, nprev)*np.sqrt(6/nprev), #scaled random initial weights
+        "weight": np.random.randn(n, nprev)*weightstd, #random initial weights
         "bias": np.zeros((n, 1)), # zeros for initial biases
         "weightdot": np.zeros((n, nprev)), #zeros for initial weight momenta
         "biasdot": np.zeros((n, 1)) # zeros for initial bias momenta
@@ -230,11 +236,8 @@ def push_bodyplanlayer(bodyplan,layer):
     newlayer["lreg"] = copy.copy(layer["lreg"])
     newlayer["desc"] = copy.copy(layer["desc"])
 
-    #get bodyplan depth
-    nlayer = len(bodyplan)
-
-    #assign newlayer the correct layer index
-    newlayer["layer"] = nlayer
+    #assign newlayer the last layer index
+    newlayer["layer"] = len(bodyplan)
 
     #push layer
     bodyplan.append(newlayer)
@@ -246,6 +249,7 @@ def reinit_ffn(model, weightstd=None):
 
     Args:
         model: A previously created ffn model
+        weightstd: an optional array of standard devations for each layer used for weight initialization.
     Returns:
         The input model with reinitialized weights and biases
     """
@@ -254,9 +258,11 @@ def reinit_ffn(model, weightstd=None):
     #always inform user model is being reinitialized
     print("Reinitialing Model!")
 
-    #get random initial weight std
-    if weightstd is None:
-        weightstd = init_weight_std
+    #ensure weightstd is an array
+    if weightstd is not None:
+        weightstd = np.array(weightstd)
+        if sum(weightstd.shape==0):
+            weightstd = weightstd[np.newaxis]
 
     #init model as list holding data for each layer start with input layer
     newmodel = []
@@ -270,17 +276,21 @@ def reinit_ffn(model, weightstd=None):
                 })
 
     # init weights and biases for hidden layers and declare activation function
-    for layer in range(1, len(model)):
-        ncurr = model[layer]["n"]
-        nprev = model[layer-1]["n"]
+    for ilayer in range(1, len(model)):
+        ncurr = model[ilayer]["n"]
+        nprev = model[ilayer-1]["n"]
+        #get defaut weight standard devation
+        if weightstd is None:
+            weightstd = np.array(6/np.sqrt(nprev))[np.newaxis]
+
         newmodel.append({
-            "layer": layer,
-            "n": model[layer]['n'],
-            "activation": model[layer]["activation"],
-            "lreg": model[layer]["lreg"],
-            "regval": model[layer]["regval"],
-            "desc": model[layer]["desc"],
-            "weight": np.random.randn(ncurr, nprev)*weightstd, #random initial weights
+            "layer": ilayer,
+            "n": model[ilayer]['n'],
+            "activation": model[ilayer]["activation"],
+            "lreg": model[ilayer]["lreg"],
+            "regval": model[ilayer]["regval"],
+            "desc": model[ilayer]["desc"],
+            "weight": np.random.randn(ncurr, nprev)*weightstd[ilayer%weightstd.shape[0]], #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
@@ -311,17 +321,17 @@ def copy_ffn(model):
                 })
 
     # init weights and biases for hidden layers and declare activation function
-    for layer in range(1, len(model)):
+    for ilayer in range(1, len(model)):
         newmodel.append({
-            "layer":layer,
-            "n": copy.copy(model[layer]['n']),
-            "activation": copy.copy(model[layer]["activation"]),
-            "lreg": copy.copy(model[layer]["lreg"]),
-            "regval": copy.copy(model[layer]["regval"]),
-            "desc": copy.copy(model[layer]["desc"]),
-            "weight": np.copy(model[layer]["weight"]),
-            "bias": np.copy(model[layer]["bias"]),
-            "weightdot": np.copy(model[layer]["weightdot"]),
-            "biasdot": np.copy(model[layer]["biasdot"])
+            "layer":ilayer,
+            "n": copy.copy(model[ilayer]['n']),
+            "activation": copy.copy(model[ilayer]["activation"]),
+            "lreg": copy.copy(model[ilayer]["lreg"]),
+            "regval": copy.copy(model[ilayer]["regval"]),
+            "desc": copy.copy(model[ilayer]["desc"]),
+            "weight": np.copy(model[ilayer]["weight"]),
+            "bias": np.copy(model[ilayer]["bias"]),
+            "weightdot": np.copy(model[ilayer]["weightdot"]),
+            "biasdot": np.copy(model[ilayer]["biasdot"])
             })
     return newmodel

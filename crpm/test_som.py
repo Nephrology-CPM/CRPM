@@ -14,7 +14,7 @@ def test_som1d_init_pca():
     from crpm.som import som
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(3367900313)
 
     #setup model with nested Cs
     model, data = setup_nestedcs()
@@ -51,7 +51,7 @@ def r_test_som2d_init_pca():
     from crpm.som import som
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(3367900313)
 
     #setup model with nested Cs
     model, data = setup_nestedcs()
@@ -104,7 +104,7 @@ def r_test_solve_nestedcs():
     from crpm.analyzebinaryclassifier import analyzebinaryclassifier
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(3367900313)
 
     #setup model
     model, data = setup_nestedcs()

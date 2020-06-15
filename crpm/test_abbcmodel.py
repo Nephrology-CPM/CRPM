@@ -4,9 +4,6 @@ from math import ceil
 from crpm.abbc_model import *
 from crpm.dynamics import computeforces
 
-#set random Seed
-np.random.seed(1199167)
-
 #define short and long term constants
 short_term = 0.5
 mid_term = 1.5
@@ -15,6 +12,9 @@ long_term = 3.0
 
 def rtest_predictoutcome():
     """test accuracy of predicted outcome for health patients is constant"""
+
+    #set random Seed
+    np.random.seed(1199167)
 
     #define cohort size
     npatients = 2
@@ -99,6 +99,10 @@ def rtest_power_and_reward_crossover():
     Assert DrugX has greater effect than DrugY at short term while DrugY has
     greater effect at long term.
     """
+
+    #set random Seed
+    np.random.seed(1199167)
+
     #define pilot cohort size
     npatients = 10
 

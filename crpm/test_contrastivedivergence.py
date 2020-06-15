@@ -13,7 +13,7 @@ def test_encode_nestedcs():
     from crpm.ffn_bodyplan import stack_new_layer
     from crpm.gradientdecent import gradientdecent
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(2860486313)
 
     #setup model
     model, data = setup_nestedcs()
@@ -55,7 +55,7 @@ def test_encode_periodiccases_deep():
     from crpm.dynamics import computecost
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(2860486313)
 
     #setup model
     model, data = setup_periodiccases_deep()
@@ -109,7 +109,7 @@ def r_test_encode_spectra2():
     from crpm.fwdprop import fwdprop
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(2860486313)
 
     #setup model
     model, data = setup_spectra2()
@@ -170,7 +170,7 @@ def r_test_pretrain_periodiccases_deep():
     #from crpm.analyzebinaryclassifier import plotroc
 
     #init numpy seed
-    np.random.seed(40017)
+    np.random.seed(2860486313)
 
     #setup model
     model, data = setup_periodiccases_deep()

@@ -10,6 +10,9 @@ def test_fwdprop_numberadder():
     from crpm.dataset import load_dataset
     from crpm.fwdprop import fwdprop
 
+    #init numpy seed
+    np.random.seed(1500450271)
+
     #create shallow bodyplan with 5 inputs and 1 output for number adder data
     bodyplan = read_bodyplan("crpm/data/numberadder_bodyplan.csv")
 
