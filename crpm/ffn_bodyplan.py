@@ -64,9 +64,9 @@ def init_ffn(bodyplan, weightstd=None):
 
     #ensure weightstd is an array
     if weightstd is not None:
-        weightstd = np.array(weightstd)
-        if sum(weightstd.shape==0):
-            weightstd = weightstd[np.newaxis]
+        weightstd0 = np.array(weightstd)
+        if sum(weightstd0.shape==0):
+            weightstd0 = weightstd0[np.newaxis]
 
     #init model as list holding data for each layer start with input layer
     model = []
@@ -84,7 +84,7 @@ def init_ffn(bodyplan, weightstd=None):
         ncurr = bodyplan[ilayer]["n"]
         nprev = bodyplan[ilayer-1]["n"]
         if weightstd is None:
-            weightstd = np.array(6/np.sqrt(nprev))[np.newaxis]
+            weightstd0 = np.array(6/np.sqrt(nprev))[np.newaxis]
 
         model.append({
             "layer":ilayer,
@@ -93,7 +93,7 @@ def init_ffn(bodyplan, weightstd=None):
             "lreg":bodyplan[ilayer]["lreg"],
             "regval":bodyplan[ilayer]["regval"],
             "desc": bodyplan[ilayer]["desc"],
-            "weight": np.random.randn(ncurr, nprev)*weightstd[ilayer%weightstd.shape[0]], #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*weightstd0[ilayer%weightstd0.shape[0]], #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
@@ -260,9 +260,9 @@ def reinit_ffn(model, weightstd=None):
 
     #ensure weightstd is an array
     if weightstd is not None:
-        weightstd = np.array(weightstd)
-        if sum(weightstd.shape==0):
-            weightstd = weightstd[np.newaxis]
+        weightstd0 = np.array(weightstd)
+        if sum(weightstd0.shape==0):
+            weightstd0 = weightstd0[np.newaxis]
 
     #init model as list holding data for each layer start with input layer
     newmodel = []
@@ -281,7 +281,7 @@ def reinit_ffn(model, weightstd=None):
         nprev = model[ilayer-1]["n"]
         #get defaut weight standard devation
         if weightstd is None:
-            weightstd = np.array(6/np.sqrt(nprev))[np.newaxis]
+            weightstd0 = np.array(6/np.sqrt(nprev))[np.newaxis]
 
         newmodel.append({
             "layer": ilayer,
@@ -290,7 +290,7 @@ def reinit_ffn(model, weightstd=None):
             "lreg": model[ilayer]["lreg"],
             "regval": model[ilayer]["regval"],
             "desc": model[ilayer]["desc"],
-            "weight": np.random.randn(ncurr, nprev)*weightstd[ilayer%weightstd.shape[0]], #random initial weights
+            "weight": np.random.randn(ncurr, nprev)*weightstd0[ilayer%weightstd0.shape[0]], #random initial weights
             "bias": np.zeros((ncurr, 1)), # zeros for initial biases
             "weightdot": np.zeros((ncurr, nprev)), #zeros for initial weight momenta
             "biasdot": np.zeros((ncurr, 1)) # zeros for initial bias momenta
