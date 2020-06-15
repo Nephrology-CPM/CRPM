@@ -122,6 +122,9 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
     #get number of generator encoding nodes
     ncode = generator[0]["n"]
 
+    #get standard deviation in all training data
+    sigma = data.std(axis=1, keepdims=True)
+
     #loop over epochs
     for epoch in range(maxepoch+1):
 
@@ -137,9 +140,8 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
             noise = np.random.rand(ncode, minibatch)
 
         #sample image noise
-        sigma = data[:, sel].std(axis=1, keepdims=True)*sigma_fac
-        imgnoise = np.random.randn(data.shape[0], minibatch) * sigma
-        fkimgnoise = np.random.randn(data.shape[0], minibatch) * sigma
+        imgnoise = np.random.randn(data.shape[0], minibatch) * sigma * sigma_fac
+        fkimgnoise = np.random.randn(data.shape[0], minibatch) * sigma * sigma_fac
 
         # - - Train discriminator to detect real data:
         #     increase TPR (decr T1err)
@@ -221,7 +223,7 @@ def gan(generator, discriminator, data, valid=None, maxepoch=500, nout=100,
         fake, genstate = fwdprop(noise, generator)
 
         # compute discriminator state due to fake data
-        pred, discstate = fwdprop(fake+fkimgnoise, discriminator)
+        pred, discstate = fwdprop(fake, discriminator)
 
         # calculate derivative of missclassification error
         #gerr, dloss = loss("bce", pred, np.repeat(1, minibatch))
