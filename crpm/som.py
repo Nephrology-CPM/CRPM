@@ -214,7 +214,7 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3)
         #           ' ', AdaptiveETA()]
         #pbar = ProgressBar(widgets=widgets)
         #for count in pbar(range(maxepoch)): #not really epochs, they are training steps
-        for count range(maxepoch): #not really epochs, they are training steps
+        for count in range(maxepoch): #not really epochs, they are training steps
 
             #shuffle sample order after each epoch
             if count%nobv == 0:
