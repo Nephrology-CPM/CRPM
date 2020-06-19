@@ -207,13 +207,14 @@ def som(map, state, maxepoch=1000, lstart=1.0, lend=1E-8, nstart=2.0, nend=1E-3)
         lfunc = lstart*np.exp(-np.log(lstart/lend)/maxepoch*np.arange(maxepoch))
         sigma = nstart*np.exp(-np.log(nstart/nend)/maxepoch*np.arange(maxepoch))
 
-        #learning loop
-        widgets = [Percentage(),
-                   ' ', Bar(),
-                   ' ', ETA(),
-                   ' ', AdaptiveETA()]
-        pbar = ProgressBar(widgets=widgets)
-        for count in pbar(range(maxepoch)): #not really epochs, they are training steps
+        ##learning loop
+        #widgets = [Percentage(),
+        #           ' ', Bar(),
+        #           ' ', ETA(),
+        #           ' ', AdaptiveETA()]
+        #pbar = ProgressBar(widgets=widgets)
+        #for count in pbar(range(maxepoch)): #not really epochs, they are training steps
+        for count range(maxepoch): #not really epochs, they are training steps
 
             #shuffle sample order after each epoch
             if count%nobv == 0:
