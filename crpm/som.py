@@ -158,10 +158,10 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     #calcualte feature variance for scaling
     sig = np.std(act, axis=1)[:,None]
 
-    print(mact)
-    print(sig)
-    print(values)
-    print(vectors)
+    #print(mact)
+    #print(sig)
+    #print(values)
+    #print(vectors)
 
     #add zero vectors if number of features is less than 3
     if vectors.shape[0] < 3:
@@ -263,5 +263,23 @@ def som_coords(map, state):
                                         map[-1]["weight"],axis=1))
         #get cluster closest node belongs to
         pred[:, obv] = map[-1]["coord"][node]
+
+    return pred
+
+
+def som_nearestnode(map, state):
+    """ return nearest node index for each observation"""
+    import numpy as np
+
+    #get number of obs
+    nobs = state[-1]["activity"].shape[1]
+    #set initial predictions all to -1
+    pred = np.zeros(nobs)
+    #classify each observation
+    for obv in range(nobs):
+        #find closest node to observation
+        node = np.argmin(np.linalg.norm(state[-2]["activity"][:, obv] -
+                                        map[-1]["weight"],axis=1))
+        pred[obv] = node
 
     return pred
