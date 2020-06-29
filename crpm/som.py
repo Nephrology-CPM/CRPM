@@ -146,7 +146,7 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
     #first 3 principal components of the penultimate layer activity
     #if data is multidimensional
 
-    if state[-2]["activity"].shape[1]>1:
+    if state[-2]["activity"].shape[0]>1:
         #define matrix with penultimate features in columns
         act = state[-2]["activity"]
         # calculate the mean of each feature
