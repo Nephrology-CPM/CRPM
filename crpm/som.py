@@ -5,7 +5,7 @@ def mapdata(map, state, data):
 
     Args:
         map: nfeature to nnode mapping
-        state: nsamples of nfeatures
+        state: nsamples of nfreatures
         data: matched nsamples of new features dim(nnewfeature, nobs)
 
     Returns: node values of dimension (nnode,nnewfeatures)
@@ -144,35 +144,33 @@ def init_som(model, state, n=100, nx=None, ny=None, hcp=False):
 
     #initialize node weights based on
     #first 3 principal components of the penultimate layer activity
-    #if data is multidimensional
 
-    if state[-2]["activity"].shape[0]>1:
-        #define matrix with penultimate features in columns
-        act = state[-2]["activity"]
-        # calculate the mean of each feature
-        mact = np.mean(act, axis=1)
-        # mean center the features
-        cact = act.T - mact
-        # calculate covariance matrix of centered features
-        vact = np.cov(cact.T)
-        # eigendecomposition of covariance matrix
-        values, vectors = np.linalg.eig(vact)
-        #calcualte feature variance for scaling
-        sig = np.std(act, axis=1)[:,None]
+    #define matrix with penultimate features in columns
+    act = state[-2]["activity"]
+    # calculate the mean of each feature
+    mact = np.mean(act, axis=1)
+    # mean center the features
+    cact = act.T - mact
+    # calculate covariance matrix of centered features
+    vact = np.cov(cact.T)
+    # eigendecomposition of covariance matrix
+    values, vectors = np.linalg.eig(vact)
+    #calcualte feature variance for scaling
+    sig = np.std(act, axis=1)[:,None]
 
-        #print(mact)
-        #print(sig)
-        #print(values)
-        #print(vectors)
+    #print(mact)
+    #print(sig)
+    #print(values)
+    #print(vectors)
 
-        #add zero vectors if number of features is less than 3
-        if vectors.shape[0] < 3:
-            zerovectors = np.zeros((3-vectors.shape[0],vectors.shape[1]))
-            vectors = np.vstack((vectors,zerovectors))
-            zerovectors = np.zeros((3-vectors.shape[0],1))
-            #project node coordinates onto first 3 principal coordinates
-            #unit scale coordinates then scale by feature stdev then translate to feature mean
-            map[-1]["weight"] = ((map[-1]["coord"]/scale).dot(vectors[0:3,:]))*sig.T+mact[:, None].T
+    #add zero vectors if number of features is less than 3
+    if vectors.shape[0] < 3:
+        zerovectors = np.zeros((3-vectors.shape[0],vectors.shape[1]))
+        vectors = np.vstack((vectors,zerovectors))
+        zerovectors = np.zeros((3-vectors.shape[0],1))
+    #project node coordinates onto first 3 principal coordinates
+    #unit scale coordinates then scale by feature stdev then translate to feature mean
+    map[-1]["weight"] = ((map[-1]["coord"]/scale).dot(vectors[0:3,:]))*sig.T+mact[:, None].T
 
     return  map, nclass
 
